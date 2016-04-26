@@ -1,0 +1,19 @@
+[package]
+name = "pcb"
+version = "0.1.0"
+authors = ["ubsan <npmazzuca@gmail.com>"]
+description = "pink compiler backend"
+license = "MIT/Apache2"
+documentation = ""
+homepage = "https://github.com/ubsan/pcb"
+repository = "https://github.com/ubsan/pcb"
+
+[lib]
+name = "pcb"
+path = "src/lib.rs"
+crate-type = ["rlib", "staticlib"]
+
+[dependencies]
+typed-arena = "1.1.0"
+llvm-sys = "0.3.0"
+libc = "0.2.7"
