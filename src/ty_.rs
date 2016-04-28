@@ -34,7 +34,7 @@ pub(crate) enum TypeKind {
 
 #[derive(Clone, Debug, Hash, PartialEq, Eq)]
 pub struct Function<'a> {
-  //input: Vec<Type<'c>>,
+  //input: Box<[Type<'c>]>,
   output: &'a Type,
 }
 

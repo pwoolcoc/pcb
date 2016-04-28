@@ -9,7 +9,6 @@ use {ty_, Ctxt, Value, Function, Block};
 // Need to be destroyed
 pub type pcb_Ctxt = *mut Ctxt;
 pub type pcb_FunctionType = *mut ty_::Function<'static>;
-// should be a ValueRef
 
 // Do not need to be destroyed
 pub type pcb_FunctionRef = *mut Function<'static>;
@@ -59,9 +58,8 @@ pub unsafe extern fn pcb_FunctionType_new(inputs: *const pcb_TypeRef,
   let inputs = if inputs_len == 0 {
     vec![]
   } else {
-    let slice =
-      std::slice::from_raw_parts(inputs as *const &ty_::Type, inputs_len);
-    slice.to_owned()
+    std::slice::from_raw_parts(inputs as *const &ty_::Type, inputs_len)
+      .to_owned()
   };
   Box::into_raw(Box::new(ty_::Function::new(inputs, &*output)))
 }
@@ -69,11 +67,7 @@ pub unsafe extern fn pcb_FunctionType_new(inputs: *const pcb_TypeRef,
 #[no_mangle]
 pub unsafe extern fn pcb_FunctionType_clone(ty: *const pcb_FunctionType)
     -> pcb_FunctionType {
-  let ty = *ty;
-  let ty = Box::from_raw(ty);
-  let ret = ty.clone();
-  Box::into_raw(ty);
-  Box::into_raw(ret)
+  Box::into_raw(Box::new((&**ty).clone()))
 }
 
 #[no_mangle]
@@ -118,7 +112,7 @@ pub unsafe extern fn pcb_Block_set_terminator_return(blk: pcb_BlockRef,
 
 
 // implementation functions
-unsafe fn ptr_len_to_str<'a>(ptr: *const u8, len: usize) -> &'a str {
+unsafe fn ptr_len_to_str(ptr: *const u8, len: usize) -> &'static str {
   if len == 0 {
     ""
   } else {

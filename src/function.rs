@@ -65,7 +65,7 @@ impl<'t> Function<'t> {
 
 impl<'a> Display for Function<'a> {
   fn fmt(&self, f: &mut Formatter) -> Result<(), fmt::Error> {
-    try!(writeln!(f, "fn {}{} {{", self.name, self.ty));
+    try!(writeln!(f, "define {}{} {{", self.name, self.ty));
     for blk in &self.blocks {
       try!(write!(f, "{}", blk));
     }
@@ -199,12 +199,11 @@ impl<'t> Block<'t> {
 
 impl<'t> Display for Block<'t> {
   fn fmt(&self, f: &mut Formatter) -> Result<(), fmt::Error> {
-    try!(writeln!(f, "  bb{}: {{", self.number));
+    try!(writeln!(f, "bb{}:", self.number));
     for value in &*self.block_values.borrow() {
-      try!(writeln!(f, "    %{}: {} = {}", value.number(), value.ty(), value));
+      try!(writeln!(f, "  %{}: {} = {}", value.number(), value.ty(), value));
     }
-    try!(writeln!(f, "    {}", self.terminator.get()));
-    try!(writeln!(f, "  }}"));
+    try!(writeln!(f, "  {}", self.terminator.get()));
     Ok(())
   }
 }
