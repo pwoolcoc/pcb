@@ -11,10 +11,10 @@ pub type pcb_Ctxt = *mut Ctxt;
 pub type pcb_FunctionType = *mut ty_::Function<'static>;
 
 // Do not need to be destroyed
-pub type pcb_FunctionRef = *mut Function<'static>;
-pub type pcb_BlockRef = *const Block<'static>;
+pub type pcb_FunctionRef = *mut Function<'static, 'static>;
+pub type pcb_BlockRef = *const Block<'static, 'static>;
 pub type pcb_TypeRef = *const ty_::Type;
-pub type pcb_ValueRef = *const Value<'static>;
+pub type pcb_ValueRef = *const Value<'static, 'static>;
 
 // -- pcb_Ctxt --
 

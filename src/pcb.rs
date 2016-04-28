@@ -3,7 +3,7 @@ use function::{Function, FuncContext};
 
 pub struct Ctxt {
   type_ctxt: ty_::TypeContext,
-  func_ctxt: FuncContext<'static>, // 'self
+  func_ctxt: FuncContext<'static, 'static>, // 'self, 'self
   _optimize: bool,
   target_machine: llvm::TargetMachine,
   target_data: llvm::TargetData,
@@ -29,19 +29,17 @@ impl Ctxt {
   }
 
   pub fn add_function<'a>(&'a self, name: &str, ty: ty_::Function<'a>)
-      -> &'a mut Function<'a> {
+      -> &'a mut Function<'a, 'a> {
+    use std::mem::transmute;
     unsafe {
-      std::mem::transmute(
+      transmute::<&mut Function, &mut Function>(
         self.func_ctxt.push(Function::new(name,
-          std::mem::transmute(ty))).to_ref())
+          transmute::<ty_::Function, ty_::Function>(ty))))
     }
   }
 
   pub fn type_int(&self, size: u32) -> &ty_::Type {
-    unsafe {
-      self.type_ctxt.get(ty_::Type::new(
-          ty_::TypeKind::Integer(size))).to_ref()
-    }
+    self.type_ctxt.get(ty_::Type::new(ty_::TypeKind::Integer(size)))
   }
 
   pub fn build_and_write(self, output: &str, print_llvm_ir: bool) {
