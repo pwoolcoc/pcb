@@ -40,7 +40,7 @@ impl Ctxt {
   pub fn type_int(&self, size: u32) -> &ty_::Type {
     unsafe {
       self.type_ctxt.get(ty_::Type::new(
-          ty_::TypeVariant::Integer(size))).to_ref()
+          ty_::TypeKind::Integer(size))).to_ref()
     }
   }
 

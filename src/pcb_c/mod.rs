@@ -13,9 +13,9 @@ pub type pcb_FunctionType = *mut ty_::Function<'static>;
 
 // Do not need to be destroyed
 pub type pcb_FunctionRef = *mut Function<'static>;
-pub type pcb_BlockRef = *const Block;
+pub type pcb_BlockRef = *const Block<'static>;
 pub type pcb_TypeRef = *const ty_::Type;
-pub type pcb_ValueRef = *const Value;
+pub type pcb_ValueRef = *const Value<'static>;
 
 // -- pcb_Ctxt --
 
@@ -32,6 +32,10 @@ pub unsafe extern fn pcb_Ctxt_build_and_write(ctxt: pcb_Ctxt, name: *const u8,
     name_len: usize, print_llvm_ir: bool) {
   let name = ptr_len_to_str(name, name_len);
   Box::from_raw(ctxt).build_and_write(name, print_llvm_ir)
+}
+#[no_mangle]
+pub unsafe extern fn pcb_Ctxt_print(ctxt: *const pcb_Ctxt) {
+  println!("{}", **ctxt);
 }
 
 #[no_mangle]
@@ -94,17 +98,24 @@ pub unsafe extern fn pcb_Block_set_terminator_branch(blk: pcb_BlockRef,
 }
 
 #[no_mangle]
-pub unsafe extern fn pcb_Block_build_const_int(blk: pcb_BlockRef, size: u32,
-    value: u64) -> pcb_ValueRef {
-  (*blk).build_const_int(size, value)
+pub unsafe extern fn pcb_Block_build_const_int(blk: pcb_BlockRef,
+    ty: pcb_TypeRef, value: u64) -> pcb_ValueRef {
+  (*blk).build_const_int(&*ty, value)
 }
 
-// takes ownership of val
+#[no_mangle]
+pub unsafe extern fn pcb_Block_build_call(blk: pcb_BlockRef,
+    func: pcb_FunctionRef) -> pcb_ValueRef {
+  (*blk).build_call(&*func)
+}
+
 #[no_mangle]
 pub unsafe extern fn pcb_Block_set_terminator_return(blk: pcb_BlockRef,
     val: pcb_ValueRef) {
   (*blk).set_terminator_return(&*val);
 }
+
+
 
 // implementation functions
 unsafe fn ptr_len_to_str<'a>(ptr: *const u8, len: usize) -> &'a str {

@@ -11,6 +11,7 @@ pub(crate) struct Ref<T: ?Sized>(*const T);
 impl<T: ?Sized> Ref<T> {
   pub unsafe fn from_ref(ref_: &T) -> Ref<T> { Ref(ref_) }
   pub unsafe fn to_ref<'a>(self) -> &'a T { &*self.0 }
+  pub fn as_ptr(&self) -> *const T { self.0 }
 }
 impl<T: ?Sized> Copy for Ref<T> { }
 impl<T: ?Sized> Clone for Ref<T> { fn clone(&self) -> Self { *self } }

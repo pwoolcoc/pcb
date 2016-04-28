@@ -4,19 +4,25 @@ use common::Interner;
 pub type TypeContext = Interner<Type>;
 
 #[derive(Debug, PartialEq, Eq, Hash)]
-pub struct Type(TypeVariant);
+pub struct Type(TypeKind);
 
 impl Type {
-  pub(crate) fn variant(&self) -> &TypeVariant {
+  pub(crate) fn variant(&self) -> &TypeKind {
     &self.0
   }
-  pub(crate) fn new(inner: TypeVariant) -> Type {
+  pub(crate) fn new(inner: TypeKind) -> Type {
     Type(inner)
+  }
+
+  pub(crate) fn int_size(&self) -> u32 {
+    match self.0 {
+      TypeKind::Integer(size) => size,
+    }
   }
 }
 
 #[derive(Debug, PartialEq, Eq, Hash)]
-pub(crate) enum TypeVariant {
+pub(crate) enum TypeKind {
   Integer(u32),
   /*
   Bool,
@@ -40,18 +46,18 @@ impl<'a> Function<'a> {
   }
 
   #[inline(always)]
-  pub fn output(&self) -> &Type {
-    &*self.output
+  pub fn output(&self) -> &'a Type {
+    self.output
   }
 }
 
 mod fmt {
   use std::fmt::{Display, Formatter, Error};
-  use super::{Type, TypeVariant, Function};
+  use super::{Type, TypeKind, Function};
   impl Display for Type {
     fn fmt(&self, f: &mut Formatter) -> Result<(), Error> {
       match self.0 {
-        TypeVariant::Integer(n) => write!(f, "i{}", n),
+        TypeKind::Integer(n) => write!(f, "i{}", n),
         /*
         TypeVariant::Bool => write!(f, "bool"),
         TypeVariant::Pointer => write!(f, "ptr"),

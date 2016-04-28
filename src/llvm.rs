@@ -413,10 +413,10 @@ pub fn get_int_type(size: u32) -> Type {
 }
 
 pub fn get_type(_target_data: &TargetData, ty: &ty::Type) -> Type {
-  use ty_::TypeVariant;
+  use ty_::TypeKind;
   unsafe {
     Type(match *ty.variant() {
-      TypeVariant::Integer(size) => LLVMIntType(size),
+      TypeKind::Integer(size) => LLVMIntType(size),
       /*
       TypeVariant::Bool => LLVMInt1Type(),
       TypeVariant::Pointer => LLVMPointerType(LLVMVoidType(), 0),

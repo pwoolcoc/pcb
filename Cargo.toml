@@ -3,8 +3,7 @@ name = "pcb"
 version = "0.1.0"
 authors = ["ubsan <npmazzuca@gmail.com>"]
 description = "pink compiler backend"
-license = "MIT/Apache2"
-documentation = ""
+license = "MIT/Apache-2.0"
 homepage = "https://github.com/ubsan/pcb"
 repository = "https://github.com/ubsan/pcb"
 
