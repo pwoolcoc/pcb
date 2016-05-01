@@ -4,4 +4,5 @@ pub mod pcb;
 pub mod function;
 pub mod ty;
 pub mod common;
-mod llvm;
+pub mod backend;
+pub mod llvm;

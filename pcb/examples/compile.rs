@@ -33,5 +33,4 @@ fn main() {
   }
 
   println!("{}", ctxt);
-  ctxt.build_and_write("test.o", true);
 }

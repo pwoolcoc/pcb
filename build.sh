@@ -1,7 +1,8 @@
 #! /bin/bash
 cargo build --manifest-path pcb-core/Cargo.toml || exit
 cargo build --manifest-path pcb/Cargo.toml || exit
-cargo build --manifest-path pcb/Cargo.toml --example compile
+cargo build --manifest-path pcb/Cargo.toml --example compile || exit
+cargo build --manifest-path pcb-llvm/Cargo.toml || exit
 
 cargo build --manifest-path pcb-c/Cargo.toml || exit
 clang -std=c11 -Wall -Wextra -pedantic -Werror -c -o compile.o \

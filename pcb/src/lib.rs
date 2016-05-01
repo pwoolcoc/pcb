@@ -8,13 +8,15 @@ impl std::fmt::Display for Ctxt {
   }
 }
 
+
 impl Ctxt {
   pub fn new() -> Ctxt {
     Ctxt(core::pcb::Ctxt::new(false))
   }
 
-  pub fn build_and_write(self, output_file: &str, print_llvm_ir: bool) {
-    self.0.build_and_write(output_file, print_llvm_ir)
+  pub fn build_and_write<B>(self, output_file: &str, print_extra_info: bool)
+      where B: core::backend::Backend {
+    B::build_and_write(self.0, output_file, print_extra_info)
   }
 }
 

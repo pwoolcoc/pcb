@@ -25,7 +25,14 @@ impl<'c> Function<'c> {
   }
 
   pub fn add_block(&'c self) -> &'c Block<'c> {
-    self.blocks.push(Block::new(self, self.blocks.len() as u32))
+    self.blocks.push(
+      Block {
+        number: self.blocks.len() as u32,
+        terminator: Cell::new(Terminator::None),
+        block_values: RefCell::new(vec![]),
+        llvm: Cell::new(None),
+        func: self,
+      })
   }
 
   pub fn build(&self) {
@@ -106,10 +113,10 @@ impl<'c> Display for Terminator<'c> {
   fn fmt(&self, f: &mut Formatter) -> Result<(), fmt::Error> {
     match *self {
       Terminator::Branch(b) => {
-        write!(f, "branch bb{}", b.number())
+        write!(f, "branch bb{}", b.number)
       },
       Terminator::Return(r) => {
-        write!(f, "return %{}", r.number())
+        write!(f, "return %{}", r.number)
       }
       Terminator::None => { Ok(()) }
     }
@@ -128,16 +135,6 @@ pub struct Block<'c> {
 }
 
 impl<'c> Block<'c> {
-  fn new(function: &'c Function<'c>, num: u32) -> Self {
-    Block {
-      number: num,
-      terminator: Cell::new(Terminator::None),
-      block_values: RefCell::new(vec![]),
-      llvm: Cell::new(None),
-      func: function,
-    }
-  }
-
   pub fn add_value(&'c self, kind: ValueKind<'c>) -> &'c Value<'c> {
     let ret = self.func.values.push(
       Value {
@@ -149,8 +146,6 @@ impl<'c> Block<'c> {
     self.block_values.borrow_mut().push(ret);
     ret
   }
-
-  fn number(&self) -> u32 { self.number }
 
   fn to_llvm(&self, builder: &llvm::Builder) {
     for value in &*self.block_values.borrow() {
@@ -164,7 +159,7 @@ impl<'c> Display for Block<'c> {
   fn fmt(&self, f: &mut Formatter) -> Result<(), fmt::Error> {
     try!(writeln!(f, "bb{}:", self.number));
     for value in &*self.block_values.borrow() {
-      try!(writeln!(f, "  %{}: {} = {}", value.number(), value.ty(), value));
+      try!(writeln!(f, "  %{}: {} = {}", value.number, value.ty(), value));
     }
     try!(writeln!(f, "  {}", self.terminator.get()));
     Ok(())
@@ -189,8 +184,6 @@ impl<'c> Value<'c> {
       ValueKind::Call(f) => f.ty.output,
     }
   }
-
-  fn number(&self) -> u32 { self.number }
 
   fn to_llvm(&self, builder: &llvm::Builder) {
     self.llvm.set(Some(match self.kind {

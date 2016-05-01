@@ -26,5 +26,5 @@ int main() {
   pcb_Block_build_return(main_end, main_ret);
 
   pcb_Ctxt_print(&ctxt);
-  pcb_Ctxt_build_and_write(ctxt, "test.o", strlen("test.o"), true);
+  pcb_Llvm_build_and_write(ctxt, STRl("test.o"), true);
 }
