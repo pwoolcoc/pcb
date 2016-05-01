@@ -4,7 +4,7 @@ use std::collections::HashSet;
 
 use typed_arena::Arena;
 
-pub(crate) struct Context<T> {
+pub struct Context<T> {
   store: Arena<T>,
   vec: RefCell<Vec<*const T>>, // for iterators
 }
@@ -77,7 +77,7 @@ impl<T: Hash + Eq> Interner<T> {
     }
   }
 
-  pub(crate) fn get(&self, variant: T) -> &T {
+  pub fn get(&self, variant: T) -> &T {
     if let Some(id) = self.refs.borrow().get(&HashPtr(&variant)) {
       return unsafe { &*id.0 };
     }

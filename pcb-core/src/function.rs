@@ -1,30 +1,30 @@
 use common::Context;
-use {ty_, llvm};
+use {ty, llvm};
 use std::fmt::{self, Display, Formatter};
 use std::cell::{Cell, RefCell};
 
-pub(crate) type FuncContext<'f, 't> = Context<Function<'f, 't>>;
+pub type FuncContext<'c> = Context<Function<'c>>;
 
-pub struct Function<'f, 't: 'f> {
-  name: String,
-  ty: ty_::Function<'t>,
-  values: RefCell<Vec<Value<'f, 't>>>, // 'self, 't
-  blocks: BlockContext<'f, 't>, // 'self, 't
-  llvm: Cell<Option<llvm::Value>>,
+pub struct Function<'c> {
+  pub name: String,
+  pub ty: ty::Function<'c>,
+  pub blocks: BlockContext<'c>,
+  pub values: ValueContext<'c>,
+  pub llvm: Cell<Option<llvm::Value>>,
 }
 
-impl<'f, 't> Function<'f, 't> {
-  pub fn new(name: &str, ty: ty_::Function<'t>) -> Self {
+impl<'c> Function<'c> {
+  pub fn new(name: &str, ty: ty::Function<'c>) -> Self {
     Function {
       name: name.to_owned(),
       ty: ty,
-      values: RefCell::new(vec![]),
+      values: ValueContext::new(),
       llvm: Cell::new(None),
       blocks: BlockContext::new(),
     }
   }
 
-  pub fn add_block(&'f self) -> &'f Block<'f, 't> {
+  pub fn add_block(&'c self) -> &'c Block<'c> {
     self.blocks.push(Block::new(self, self.blocks.len() as u32))
   }
 
@@ -51,17 +51,12 @@ impl<'f, 't> Function<'f, 't> {
   }
 
   #[inline(always)]
-  pub fn ty(&self) -> &ty_::Function {
+  pub fn ty(&self) -> &ty::Function<'c> {
     &self.ty
-  }
-
-  #[inline(always)]
-  pub(crate) fn llvm(&self) -> &Cell<Option<llvm::Value>> {
-    &self.llvm
   }
 }
 
-impl<'f, 't> Display for Function<'f, 't> {
+impl<'c> Display for Function<'c> {
   fn fmt(&self, f: &mut Formatter) -> Result<(), fmt::Error> {
     try!(writeln!(f, "define {}{} {{", self.name, self.ty));
     for blk in &self.blocks {
@@ -71,17 +66,17 @@ impl<'f, 't> Display for Function<'f, 't> {
   }
 }
 
-pub(crate) type BlockContext<'f, 't> = Context<Block<'f, 't>>;
+pub type BlockContext<'c> = Context<Block<'c>>;
 
 #[derive(Copy, Clone)]
-pub(crate) enum Terminator<'f, 't: 'f> {
-  Branch(&'f Block<'f, 't>),
+pub enum Terminator<'c> {
+  Branch(&'c Block<'c>),
   // final return in a function
-  Return(&'f Value<'f, 't>),
+  Return(&'c Value<'c>),
   None,
 }
 
-impl<'f, 't> Terminator<'f, 't> {
+impl<'c> Terminator<'c> {
   fn to_llvm(&self, builder: &llvm::Builder) {
     match *self {
       Terminator::Branch(b) => {
@@ -97,9 +92,17 @@ impl<'f, 't> Terminator<'f, 't> {
       }
     }
   }
+
+  pub fn is_none(self) -> bool {
+    if let Terminator::None = self {
+      true
+    } else {
+      false
+    }
+  }
 }
 
-impl<'f, 't> Display for Terminator<'f, 't> {
+impl<'c> Display for Terminator<'c> {
   fn fmt(&self, f: &mut Formatter) -> Result<(), fmt::Error> {
     match *self {
       Terminator::Branch(b) => {
@@ -116,16 +119,16 @@ impl<'f, 't> Display for Terminator<'f, 't> {
 // TODO(ubsan): don't allow terminators to be re-set, and stop allowing stuff to
 // build after setting terminator
 // .build_return, .build_branch, etc.
-pub struct Block<'f, 't: 'f> {
-  number: u32,
-  terminator: Cell<Terminator<'f, 't>>,
-  block_values: RefCell<Vec<&'f Value<'f, 't>>>,
-  llvm: Cell<Option<llvm::BasicBlock>>,
-  func: &'f Function<'f, 't>,
+pub struct Block<'c> {
+  pub number: u32,
+  pub terminator: Cell<Terminator<'c>>,
+  pub block_values: RefCell<Vec<&'c Value<'c>>>,
+  pub llvm: Cell<Option<llvm::BasicBlock>>,
+  pub func: &'c Function<'c>,
 }
 
-impl<'f, 't> Block<'f, 't> {
-  fn new(function: &'f Function<'f, 't>, num: u32) -> Self {
+impl<'c> Block<'c> {
+  fn new(function: &'c Function<'c>, num: u32) -> Self {
     Block {
       number: num,
       terminator: Cell::new(Terminator::None),
@@ -135,53 +138,16 @@ impl<'f, 't> Block<'f, 't> {
     }
   }
 
-  pub fn set_terminator_branch(&self, b: &'f Block<'f, 't>) {
-    assert!(self.func as *const _ == b.func as *const _,
-        "pcb_assert: branch is not to a block from the same function");
-    self.terminator.set(Terminator::Branch(b));
-  }
-
-  pub fn set_terminator_return(&self, v: &'f Value<'f, 't>) {
-    assert!(self.func as *const _ == v.func as *const _,
-        "pcb_assert: Value is not from the same function as block");
-    self.terminator.set(Terminator::Return(v));
-  }
-
-  pub fn build_const_int(&self, ty: &'t ty_::Type, value: u64)
-      ->  &Value<'f, 't> {
-    use std::mem::transmute;
-    let mut borrow = self.func.values.borrow_mut();
-    let len = borrow.len();
-    borrow.push(
-      Value::new(ValueKind::ConstInt {
-        ty: ty,
-        value: value
-      },
-      len as u32,
-      self.func,
-    ));
-    unsafe {
-      let ret = transmute::<&Value, &Value>(&borrow[borrow.len() - 1]);
-      self.block_values.borrow_mut().push(ret);
-      ret
-    }
-  }
-
-  pub fn build_call(&'f self, func: &'f Function<'f, 't>) -> &'f Value<'f, 't> {
-    use std::mem::transmute;
-    let mut borrow = self.func.values.borrow_mut();
-    let len = borrow.len();
-    borrow.push(
-      Value::new(
-        ValueKind::Call(unsafe { transmute::<&Function, &Function>(func) }),
-        len as u32,
-        self.func,
-    ));
-    unsafe {
-      let ret = transmute::<&Value, &Value>(&borrow[borrow.len() - 1]);
-      self.block_values.borrow_mut().push(ret);
-      ret
-    }
+  pub fn add_value(&'c self, kind: ValueKind<'c>) -> &'c Value<'c> {
+    let ret = self.func.values.push(
+      Value {
+        number: self.func.values.len() as u32,
+        kind: kind,
+        llvm: Cell::new(None),
+        func: &self.func,
+      });
+    self.block_values.borrow_mut().push(ret);
+    ret
   }
 
   fn number(&self) -> u32 { self.number }
@@ -194,7 +160,7 @@ impl<'f, 't> Block<'f, 't> {
   }
 }
 
-impl<'f, 't> Display for Block<'f, 't> {
+impl<'c> Display for Block<'c> {
   fn fmt(&self, f: &mut Formatter) -> Result<(), fmt::Error> {
     try!(writeln!(f, "bb{}:", self.number));
     for value in &*self.block_values.borrow() {
@@ -205,32 +171,25 @@ impl<'f, 't> Display for Block<'f, 't> {
   }
 }
 
-pub struct Value<'f, 't: 'f> {
-  number: u32,
-  kind: ValueKind<'f, 't>,
-  llvm: Cell<Option<llvm::Value>>,
-  func: &'f Function<'f, 't>,
+pub type ValueContext<'c> = Context<Value<'c>>;
+
+pub struct Value<'c> {
+  pub number: u32,
+  pub kind: ValueKind<'c>,
+  pub llvm: Cell<Option<llvm::Value>>,
+  pub func: &'c Function<'c>,
 }
-impl<'f, 't> Value<'f, 't> {
-  pub fn ty(&self) -> &'t ty_::Type {
+impl<'c> Value<'c> {
+  pub fn ty(&self) -> &'c ty::TypeKind {
     match self.kind {
       ValueKind::ConstInt {
         ty,
         ..
       } => ty,
-      ValueKind::Call(f) => f.ty.output(),
+      ValueKind::Call(f) => f.ty.output,
     }
   }
 
-  fn new(kind: ValueKind<'f, 't>, number: u32, func: &'f Function<'f, 't>)
-      -> Self {
-    Value {
-      number: number,
-      kind: kind,
-      llvm: Cell::new(None),
-      func: func,
-    }
-  }
   fn number(&self) -> u32 { self.number }
 
   fn to_llvm(&self, builder: &llvm::Builder) {
@@ -249,15 +208,15 @@ impl<'f, 't> Value<'f, 't> {
   }
 }
 
-enum ValueKind<'f, 't: 'f> {
+pub enum ValueKind<'c> {
   ConstInt {
-    ty: &'t ty_::Type,
+    ty: &'c ty::TypeKind,
     value: u64,
   },
-  Call(&'f Function<'f, 't>),
+  Call(&'c Function<'c>),
 }
 
-impl<'f, 't> Display for Value<'f, 't> {
+impl<'c> Display for Value<'c> {
   fn fmt(&self, f: &mut Formatter) -> Result<(), fmt::Error> {
     match self.kind {
       ValueKind::ConstInt {

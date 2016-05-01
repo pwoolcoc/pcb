@@ -1,0 +1,17 @@
+[package]
+name = "pcb-core"
+version = "0.1.2"
+authors = ["ubsan <npmazzuca@gmail.com>"]
+description = "Pink Compiler Backend: Language agnostic compiler backend - Core Library"
+license = "MIT/Apache-2.0"
+homepage = "https://github.com/ubsan/pcb"
+repository = "https://github.com/ubsan/pcb"
+
+[lib]
+name = "pcb_core"
+path = "src/lib.rs"
+
+[dependencies]
+typed-arena = "1.1.0"
+llvm-sys = "0.3.0"
+libc = "0.2.7"

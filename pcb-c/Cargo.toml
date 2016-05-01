@@ -1,0 +1,16 @@
+[package]
+name = "pcb-c"
+version = "0.1.0"
+authors = ["ubsan <npmazzuca@gmail.com>"]
+description = "Pink Compiler Backend: Language agnostic compiler backend - C Library"
+license = "MIT/Apache-2.0"
+homepage = "https://github.com/ubsan/pcb"
+repository = "https://github.com/ubsan/pcb"
+
+[lib]
+name = "pcb_c"
+path = "src/lib.rs"
+crate-type = ["staticlib"]
+
+[dependencies]
+pcb = "0.1.2"

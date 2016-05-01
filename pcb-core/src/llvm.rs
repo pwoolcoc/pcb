@@ -400,7 +400,7 @@ impl std::ops::Drop for FnOptimizer {
 }
 
 
-pub fn size_of_type(target_data: &TargetData, ty: &ty::Type) -> u64 {
+pub fn size_of_type(target_data: &TargetData, ty: &ty::TypeKind) -> u64 {
   unsafe {
     LLVMSizeOfTypeInBits(target_data.0, get_type(target_data, &ty).0)
   }
@@ -412,10 +412,10 @@ pub fn get_int_type(size: u32) -> Type {
   }
 }
 
-pub fn get_type(_target_data: &TargetData, ty: &ty::Type) -> Type {
-  use ty_::TypeKind;
+pub fn get_type(_target_data: &TargetData, ty: &ty::TypeKind) -> Type {
+  use ty::TypeKind;
   unsafe {
-    Type(match *ty.variant() {
+    Type(match *ty {
       TypeKind::Integer(size) => LLVMIntType(size),
       /*
       TypeVariant::Bool => LLVMInt1Type(),
@@ -432,16 +432,6 @@ pub fn get_type(_target_data: &TargetData, ty: &ty::Type) -> Type {
   }
 }
 
-pub fn get_return_type(target_data: &TargetData, ty: &ty::Type) -> Type {
-  unsafe {
-    if size_of_type(target_data, ty) == 0 {
-      Type(LLVMVoidType())
-    } else {
-      get_type(target_data, ty)
-    }
-  }
-}
-
 pub fn get_function_type(target_data: &TargetData, ty: &ty::Function)
     -> Type {
   unsafe {
@@ -450,7 +440,7 @@ pub fn get_function_type(target_data: &TargetData, ty: &ty::Function)
       .collect::<Vec<_>>();
       */
     let mut args = [];
-    Type(LLVMFunctionType(get_return_type(target_data, ty.output()).0,
+    Type(LLVMFunctionType(get_type(target_data, ty.output).0,
       args.as_mut_ptr(), args.len() as u32, false as LLVMBool))
   }
 }

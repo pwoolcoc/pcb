@@ -1,30 +1,21 @@
 //use super::Ctxt;
 use common::Interner;
 
-pub type TypeContext = Interner<Type>;
+pub type TypeContext = Interner<TypeKind>;
 
-#[derive(Debug, PartialEq, Eq, Hash)]
-pub struct Type(TypeKind);
-
-impl Type {
-  pub(crate) fn variant(&self) -> &TypeKind {
-    &self.0
-  }
-  pub(crate) fn new(inner: TypeKind) -> Type {
-    Type(inner)
-  }
-
-  pub(crate) fn int_size(&self) -> u32 {
-    match self.0 {
+impl TypeKind {
+  pub fn int_size(&self) -> u32 {
+    match *self {
       TypeKind::Integer(size) => size,
     }
   }
 }
 
 #[derive(Debug, PartialEq, Eq, Hash)]
-pub(crate) enum TypeKind {
+pub enum TypeKind {
   Integer(u32),
   /*
+  Void,
   Bool,
   Pointer,
   // FnPtr
@@ -33,30 +24,17 @@ pub(crate) enum TypeKind {
 }
 
 #[derive(Clone, Debug, Hash, PartialEq, Eq)]
-pub struct Function<'a> {
-  //input: Box<[Type<'c>]>,
-  output: &'a Type,
-}
-
-impl<'a> Function<'a> {
-  pub fn new(_inputs: Vec<&'a Type>, output: &'a Type) -> Self {
-    Function {
-      output: output,
-    }
-  }
-
-  #[inline(always)]
-  pub fn output(&self) -> &'a Type {
-    self.output
-  }
+pub struct Function<'t> {
+  //pub input: Box<[TypeKind<'t>]>,
+  pub output: &'t TypeKind,
 }
 
 mod fmt {
   use std::fmt::{Display, Formatter, Error};
-  use super::{Type, TypeKind, Function};
-  impl Display for Type {
+  use super::{TypeKind, Function};
+  impl Display for TypeKind {
     fn fmt(&self, f: &mut Formatter) -> Result<(), Error> {
-      match self.0 {
+      match *self {
         TypeKind::Integer(n) => write!(f, "i{}", n),
         /*
         TypeVariant::Bool => write!(f, "bool"),
