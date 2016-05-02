@@ -19,11 +19,25 @@ impl Ctxt {
   pub fn add_function<'c>(&'c self, name: &str, ty: ty::Function<'c>)
       -> &'c Function<'c> {
     use std::mem::transmute;
-    unsafe {
-      transmute::<&'c Function<'static>, &'c Function<'c>>(
-        self.func_ctxt.push(Function::new(name,
-          transmute::<ty::Function<'c>, ty::Function<'static>>(ty))))
+    use function::{Value, ValueKind, ValueContext, BlockContext};
+
+    let ret = unsafe {
+      let ret = self.func_ctxt.push(Function {
+        name: name.to_owned(),
+        ty: transmute::<ty::Function<'c>, ty::Function<'static>>(ty),
+        values: ValueContext::new(),
+        blocks: BlockContext::new(),
+      });
+      transmute::<&'c Function<'static>, &'c Function<'c>>(ret)
+    };
+    for arg_ty in &ret.ty.inputs[..] {
+      ret.values.push(Value {
+        number: ret.values.len() as u32,
+        kind: ValueKind::Parameter(arg_ty),
+        func: ret,
+      });
     }
+    ret
   }
 
   pub fn get_type(&self, kind: ty::TypeKind) -> &ty::TypeKind {

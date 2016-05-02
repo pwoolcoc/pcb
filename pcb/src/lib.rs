@@ -27,6 +27,12 @@ impl<'c> Function<'c> {
   pub fn new(ctxt: &'c Ctxt, name: &str, ty: ty::Function<'c>) -> Self {
     Function(ctxt.0.add_function(name, ty.inner()))
   }
+
+  pub fn get_argument(&self, number: u32) -> Value<'c> {
+    assert!(number < self.0.ty.inputs.len() as u32, "pcb_assert: attempted to \
+        get nonexistent argument");
+    Value(self.0.values.get(number as usize).unwrap())
+  }
 }
 
 #[derive(Copy, Clone)]
@@ -49,10 +55,17 @@ impl<'c> Block<'c> {
     Value(self.0.add_value(
         core::function::ValueKind::ConstInt { ty: ty.inner(), value: value }))
   }
-  pub fn build_call(self, func: Function<'c>) -> Value<'c> {
+  pub fn build_call(self, func: Function<'c>, params: &[Value<'c>])
+      -> Value<'c> {
     chk_term!(self);
+    // TODO(ubsan): check calls against type of func
+    let mut inner_params = vec![];
+    for param in params {
+      inner_params.push(param.0)
+    }
     Value(self.0.add_value(
-        core::function::ValueKind::Call(func.0)))
+      core::function::ValueKind::Call { function: func.0,
+        parameters: inner_params.into_boxed_slice() }))
   }
 
   pub fn build_return(self, value: Value<'c>) {
@@ -65,6 +78,7 @@ impl<'c> Block<'c> {
   }
 }
 
+#[derive(Copy, Clone)]
 pub struct Value<'c>(&'c core::function::Value<'c>);
 
 trait TyExt {
@@ -89,8 +103,13 @@ pub mod ty {
   pub struct Function<'c>(ty::Function<'c>);
 
   impl<'c> Function<'c> {
-    pub fn new(_inputs: Vec<Type<'c>>, output: Type<'c>) -> Function<'c> {
+    pub fn new(inputs: Vec<Type<'c>>, output: Type<'c>) -> Function<'c> {
+      let mut input_inner = vec![];
+      for input in inputs {
+        input_inner.push(input.0);
+      }
       Function(ty::Function {
+        inputs: input_inner.into_boxed_slice(),
         output: output.0,
       })
     }

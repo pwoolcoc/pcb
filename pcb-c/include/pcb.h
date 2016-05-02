@@ -50,11 +50,13 @@ void pcb_FuntionType_delete(pcb_FunctionType func);
 
 pcb_FunctionRef pcb_Function_create(pcb_Ctxt const* ctxt, char const* name, size_t name_len, pcb_FunctionType ty);
 
+pcb_ValueRef pcb_Function_get_argument(pcb_FunctionRef func, uint32_t number);
+
 pcb_BlockRef pcb_Block_append(pcb_FunctionRef func);
 
 pcb_ValueRef pcb_Block_build_const_int(pcb_BlockRef blk, pcb_TypeRef ty, uint64_t value);
 
-pcb_ValueRef pcb_Block_build_call(pcb_BlockRef blk, pcb_FunctionRef func);
+pcb_ValueRef pcb_Block_build_call(pcb_BlockRef blk, pcb_FunctionRef func, pcb_ValueRef const* args, size_t args_len);
 
 void pcb_Block_build_branch(pcb_BlockRef blk, pcb_BlockRef to);
 

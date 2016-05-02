@@ -26,9 +26,9 @@ fn main() {
     let main_start = Block::append(main); // the first block added is the entry
                                           // block
     let main_end = Block::append(main);
-    let main_ret = main_start.build_call(foo);
+    let main_ret = main_start.build_call(foo, &[]);
     main_start.build_branch(main_end);
-    main_end.build_call(foo); // useless, but you can still do
+    main_end.build_call(foo, &[]); // useless, but you can still do
     main_end.build_return(main_ret);
   }
 

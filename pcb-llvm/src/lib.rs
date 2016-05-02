@@ -55,6 +55,9 @@ fn build_function<'a>(func: &Function<'a>, llfunc: llvm::Value,
   if func.blocks.iter().next().is_none() {
     panic!("pcb_assert: function {} has no associated blocks", func.name)
   }
+  for i in 0..func.ty.inputs.len() {
+    llvm_values.push(llvm::Value::get_param(llfunc, i as u32))
+  }
   let builder = llvm::Builder::new();
   for i in 0..func.blocks.len() {
     llvm_blocks.push(llvm::BasicBlock::append(llfunc, i as u32));
@@ -86,9 +89,19 @@ fn build_value<'a>(value: &Value<'a>, builder: &llvm::Builder,
     } => {
       llvm::Value::const_int(llvm::get_int_type(ty.int_size()), value)
     }
-    ValueKind::Call(f) => {
-      builder.build_call(*functions.get(f).expect("pcb_ice: Blorghle"), &[])
+    ValueKind::Call {
+      function,
+      ref parameters
+    } => {
+      let mut llvm_params = vec![];
+      for param in parameters.iter() {
+        llvm_params.push(values[param.number as usize]);
+      }
+      builder.build_call(*functions.get(function).expect("pcb_ice: Blorghle"),
+        &llvm_params)
     }
+    ValueKind::Parameter(_) => panic!("pcb_ice: Parameter should never be \
+      built"),
   };
   values.push(llval)
 }

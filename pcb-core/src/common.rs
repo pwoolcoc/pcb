@@ -16,7 +16,7 @@ impl<T> Context<T> {
       vec: RefCell::new(vec![])
     }
   }
-  pub fn push(&self, variant: T) -> &mut T {
+  pub fn push(&self, variant: T) -> &T {
     let id = self.store.alloc(variant);
     self.vec.borrow_mut().push(id);
     id
@@ -33,6 +33,14 @@ impl<T> Context<T> {
                     cell::Ref<Vec<&T>>>(self.vec.borrow())
       },
       idx: 0,
+    }
+  }
+
+  pub fn get(&self, idx: usize) -> Option<&T> {
+    if idx < self.len() {
+      Some(unsafe { &*self.vec.borrow()[idx] })
+    } else {
+      None
     }
   }
 }

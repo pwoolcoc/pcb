@@ -14,15 +14,6 @@ pub struct Function<'c> {
 }
 
 impl<'c> Function<'c> {
-  pub fn new(name: &str, ty: ty::Function<'c>) -> Self {
-    Function {
-      name: name.to_owned(),
-      ty: ty,
-      values: ValueContext::new(),
-      blocks: BlockContext::new(),
-    }
-  }
-
   pub fn add_block(&'c self) -> &'c Block<'c> {
     self.blocks.push(
       Block {
@@ -143,7 +134,11 @@ impl<'c> Value<'c> {
         ty,
         ..
       } => ty,
-      ValueKind::Call(f) => f.ty.output,
+      ValueKind::Call {
+        function,
+        ..
+      } => function.ty.output,
+      ValueKind::Parameter(ty) => ty,
     }
   }
 
@@ -154,7 +149,11 @@ pub enum ValueKind<'c> {
     ty: &'c ty::TypeKind,
     value: u64,
   },
-  Call(&'c Function<'c>),
+  Call {
+    function: &'c Function<'c>,
+    parameters: Box<[&'c Value<'c>]>
+  },
+  Parameter(&'c ty::TypeKind),
 }
 
 impl<'c> Display for Value<'c> {
@@ -166,9 +165,21 @@ impl<'c> Display for Value<'c> {
       } => {
         try!(write!(f, "{}", value));
       }
-      ValueKind::Call(ref func) => {
-        try!(write!(f, "call {}()", func.name));
+      ValueKind::Call {
+        function,
+        ref parameters
+      } => {
+        try!(write!(f, "call {}(", function.name));
+        if !parameters.is_empty() {
+          for i in 0..parameters.len() - 1 {
+            try!(write!(f, "%{}, ", i));
+          }
+          try!(write!(f, "%{}", parameters.len() - 1));
+        }
+        try!(write!(f, ")"));
       }
+      ValueKind::Parameter(_) => panic!("pcb_ice: Parameters should not be \
+        displayed"),
     }
     Ok(())
   }

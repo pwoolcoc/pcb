@@ -89,6 +89,12 @@ pub unsafe extern fn pcb_Function_create(ctxt: *const pcb_Ctxt,
   wrap(Function::new(&(**ctxt).0, name, Box::from_raw(ty).0))
 }
 
+#[no_mangle]
+pub unsafe extern fn pcb_Function_get_argument(func: pcb_FunctionRef,
+    number: u32) -> pcb_ValueRef {
+  wrap(unwrap(func).get_argument(number))
+}
+
 // -- pcb_BlockRef --
 
 #[no_mangle]
@@ -104,8 +110,14 @@ pub unsafe extern fn pcb_Block_build_const_int(blk: pcb_BlockRef,
 
 #[no_mangle]
 pub unsafe extern fn pcb_Block_build_call(blk: pcb_BlockRef,
-    func: pcb_FunctionRef) -> pcb_ValueRef {
-  wrap(unwrap(blk).build_call(unwrap(func)))
+    func: pcb_FunctionRef, args: *const pcb_ValueRef, args_len: libc::size_t)
+    -> pcb_ValueRef {
+  let opaque = ptr_len_to_slice(args, args_len);
+  let mut unwrapped = vec![];
+  for el in opaque {
+    unwrapped.push(unwrap(*el));
+  }
+  wrap(unwrap(blk).build_call(unwrap(func), &unwrapped))
 }
 
 #[no_mangle]
@@ -144,6 +156,15 @@ unsafe fn ptr_len_to_str(ptr: *const u8, len: libc::size_t) -> &'static str {
     ""
   } else {
     std::str::from_utf8(std::slice::from_raw_parts(ptr, len)).unwrap()
+  }
+}
+
+unsafe fn ptr_len_to_slice<T>(ptr: *const T, len: libc::size_t)
+    -> &'static [T] {
+  if len == 0 {
+    &[]
+  } else {
+    std::slice::from_raw_parts(ptr, len)
   }
 }
 

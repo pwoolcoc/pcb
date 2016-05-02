@@ -25,7 +25,7 @@ pub enum TypeKind {
 
 #[derive(Clone, Debug, Hash, PartialEq, Eq)]
 pub struct Function<'t> {
-  //pub input: Box<[TypeKind<'t>]>,
+  pub inputs: Box<[&'t TypeKind]>,
   pub output: &'t TypeKind,
 }
 
@@ -57,7 +57,14 @@ mod fmt {
 
   impl<'a> Display for Function<'a> {
     fn fmt(&self, f: &mut Formatter) -> Result<(), Error> {
-      write!(f, "() -> {}", self.output)
+      try!(write!(f, "("));
+      if !self.inputs.is_empty() {
+        for input in &self.inputs[..self.inputs.len() - 1] {
+          try!(write!(f, "{}, ", input));
+        }
+        try!(write!(f, "{}", self.inputs[self.inputs.len() - 1]));
+      }
+      write!(f, ") -> {}", self.output)
     }
   }
 }

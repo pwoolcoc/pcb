@@ -1,12 +1,11 @@
 #! /bin/bash
-./build.sh
+./build.sh || exit
 echo
 echo "=== pcb ==="
 echo
 cargo run --manifest-path pcb/Cargo.toml --example compile
-rm test.o
 echo
 echo "===  pcb-c  ==="
 echo
-./compile
+./compile || exit
 rm test.o

@@ -435,11 +435,8 @@ pub fn get_type(_target_data: &TargetData, ty: &ty::TypeKind) -> Type {
 pub fn get_function_type(target_data: &TargetData, ty: &ty::Function)
     -> Type {
   unsafe {
-    /*
-    let mut args = ty.input.iter().map(|a| get_type(target_data, *a).0)
+    let mut args = ty.inputs.iter().map(|a| get_type(target_data, *a).0)
       .collect::<Vec<_>>();
-      */
-    let mut args = [];
     Type(LLVMFunctionType(get_type(target_data, ty.output).0,
       args.as_mut_ptr(), args.len() as u32, false as LLVMBool))
   }
