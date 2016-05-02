@@ -1,6 +1,7 @@
 use common::Context;
-use {ty, llvm};
+use ty;
 use std::fmt::{self, Display, Formatter};
+use std::hash::{Hash, Hasher};
 use std::cell::{Cell, RefCell};
 
 pub type FuncContext<'c> = Context<Function<'c>>;
@@ -10,7 +11,6 @@ pub struct Function<'c> {
   pub ty: ty::Function<'c>,
   pub blocks: BlockContext<'c>,
   pub values: ValueContext<'c>,
-  pub llvm: Cell<Option<llvm::Value>>,
 }
 
 impl<'c> Function<'c> {
@@ -19,7 +19,6 @@ impl<'c> Function<'c> {
       name: name.to_owned(),
       ty: ty,
       values: ValueContext::new(),
-      llvm: Cell::new(None),
       blocks: BlockContext::new(),
     }
   }
@@ -30,31 +29,8 @@ impl<'c> Function<'c> {
         number: self.blocks.len() as u32,
         terminator: Cell::new(Terminator::None),
         block_values: RefCell::new(vec![]),
-        llvm: Cell::new(None),
         func: self,
       })
-  }
-
-  pub fn build(&self) {
-    let llfunc = self.llvm.get().expect(
-      &format!("llfunc was never set for {}", self.name));
-    if self.blocks.iter().next().is_none() {
-      panic!("pcb_assert: function {} has no associated blocks", self.name)
-    }
-    let builder = llvm::Builder::new();
-    for (i, block) in self.blocks.iter().enumerate() {
-      block.llvm.set(Some(llvm::BasicBlock::append(llfunc, i as u32)));
-    }
-
-    for block in &self.blocks {
-      builder.position_at_end(block.llvm.get().unwrap());
-      block.to_llvm(&builder);
-    }
-  }
-
-  #[inline(always)]
-  pub fn name(&self) -> &str {
-    &self.name
   }
 
   #[inline(always)]
@@ -73,6 +49,18 @@ impl<'c> Display for Function<'c> {
   }
 }
 
+impl<'c> PartialEq for Function<'c> {
+  fn eq(&self, rhs: &Self) -> bool {
+    self.name == rhs.name
+  }
+}
+impl<'c> Eq for Function<'c> { }
+impl<'c> Hash for Function<'c> {
+  fn hash<H>(&self, state: &mut H) where H: Hasher {
+    self.name.hash(state)
+  }
+}
+
 pub type BlockContext<'c> = Context<Block<'c>>;
 
 #[derive(Copy, Clone)]
@@ -84,22 +72,6 @@ pub enum Terminator<'c> {
 }
 
 impl<'c> Terminator<'c> {
-  fn to_llvm(&self, builder: &llvm::Builder) {
-    match *self {
-      Terminator::Branch(b) => {
-        builder.build_br(b.llvm.get().expect("pcb_ice: All blocks should \
-          have associated basic blocks by now"));
-      },
-      Terminator::Return(r) => {
-        builder.build_ret(r.llvm.get().expect("pcb_ice: Value does not \
-            have an associated llvm value"));
-      }
-      Terminator::None => {
-        panic!("pcb_assert: no terminator set")
-      }
-    }
-  }
-
   pub fn is_none(self) -> bool {
     if let Terminator::None = self {
       true
@@ -130,7 +102,6 @@ pub struct Block<'c> {
   pub number: u32,
   pub terminator: Cell<Terminator<'c>>,
   pub block_values: RefCell<Vec<&'c Value<'c>>>,
-  pub llvm: Cell<Option<llvm::BasicBlock>>,
   pub func: &'c Function<'c>,
 }
 
@@ -140,18 +111,10 @@ impl<'c> Block<'c> {
       Value {
         number: self.func.values.len() as u32,
         kind: kind,
-        llvm: Cell::new(None),
         func: &self.func,
       });
     self.block_values.borrow_mut().push(ret);
     ret
-  }
-
-  fn to_llvm(&self, builder: &llvm::Builder) {
-    for value in &*self.block_values.borrow() {
-      value.to_llvm(builder);
-    }
-    self.terminator.get().to_llvm(builder);
   }
 }
 
@@ -171,7 +134,6 @@ pub type ValueContext<'c> = Context<Value<'c>>;
 pub struct Value<'c> {
   pub number: u32,
   pub kind: ValueKind<'c>,
-  pub llvm: Cell<Option<llvm::Value>>,
   pub func: &'c Function<'c>,
 }
 impl<'c> Value<'c> {
@@ -185,20 +147,6 @@ impl<'c> Value<'c> {
     }
   }
 
-  fn to_llvm(&self, builder: &llvm::Builder) {
-    self.llvm.set(Some(match self.kind {
-      ValueKind::ConstInt {
-        ty,
-        value,
-      } => {
-        llvm::Value::const_int(llvm::get_int_type(ty.int_size()), value)
-      }
-      ValueKind::Call(f) => {
-        builder.build_call(f.llvm.get().expect("pcb_ice: all pcb IR functions \
-          should have associated llvm IR functions by now"), &[])
-      }
-    }))
-  }
 }
 
 pub enum ValueKind<'c> {
@@ -219,7 +167,7 @@ impl<'c> Display for Value<'c> {
         try!(write!(f, "{}", value));
       }
       ValueKind::Call(ref func) => {
-        try!(write!(f, "call {}()", func.name()));
+        try!(write!(f, "call {}()", func.name));
       }
     }
     Ok(())

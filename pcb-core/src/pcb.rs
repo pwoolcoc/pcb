@@ -1,30 +1,18 @@
-use {std, llvm, ty};
+use {std, ty};
 use function::{Function, FuncContext};
 
 pub struct Ctxt {
   pub type_ctxt: ty::TypeContext,
   pub func_ctxt: FuncContext<'static>, // 'self
   pub optimize: bool,
-  pub target_machine: llvm::TargetMachine,
-  pub target_data: llvm::TargetData,
 }
 
 impl Ctxt {
   pub fn new(opt: bool) -> Self {
-    let opt_level = if opt {
-      llvm::NoOptimization
-    } else {
-      llvm::DefaultOptimization
-    };
-    let target_machine = llvm::TargetMachine::new(opt_level).unwrap();
-    let target_data = llvm::TargetData::from_target_machine(&target_machine);
-
     Ctxt {
       type_ctxt: ty::TypeContext::new(),
       func_ctxt: FuncContext::new(),
       optimize: opt,
-      target_machine: target_machine,
-      target_data: target_data,
     }
   }
 

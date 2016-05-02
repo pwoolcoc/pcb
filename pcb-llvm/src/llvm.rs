@@ -2,7 +2,7 @@
 
 use std;
 use std::ffi::{CStr, CString};
-use ty;
+use core::ty;
 
 extern crate llvm_sys;
 extern crate libc;
@@ -413,7 +413,7 @@ pub fn get_int_type(size: u32) -> Type {
 }
 
 pub fn get_type(_target_data: &TargetData, ty: &ty::TypeKind) -> Type {
-  use ty::TypeKind;
+  use core::ty::TypeKind;
   unsafe {
     Type(match *ty {
       TypeKind::Integer(size) => LLVMIntType(size),
