@@ -291,16 +291,22 @@ impl TargetMachine {
     }
   }
 
-  pub fn emit_to_file(&self, module: &Module, output: &str)
-      -> Result<(), String> {
-    let output = CString::new(output.to_owned()).expect("emit_to_file: ");
+  pub fn emit_to<W>(&self, module: &Module, output: &mut W)
+      -> Result<(), String> where W: std::io::Write {
     unsafe {
       let mut error = std::mem::uninitialized();
-      if LLVMTargetMachineEmitToFile(self.0, module.0,
-          output.as_ptr() as *mut c_char,
-          LLVMCodeGenFileType::LLVMObjectFile, &mut error) != 0 {
+      let mut mem_buf = std::mem::uninitialized();
+      if LLVMTargetMachineEmitToMemoryBuffer(self.0, module.0,
+          LLVMCodeGenFileType::LLVMObjectFile, &mut error, &mut mem_buf) != 0 {
         Err(CStr::from_ptr(error).to_string_lossy().into_owned())
       } else {
+        let ptr = LLVMGetBufferStart(mem_buf);
+        let len = LLVMGetBufferSize(mem_buf);
+        if let Err(e) = output.write_all(
+            std::slice::from_raw_parts(ptr as *const u8, len)) {
+          return Err(e.to_string());
+        }
+        LLVMDisposeMemoryBuffer(mem_buf);
         Ok(())
       }
     }

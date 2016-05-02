@@ -11,7 +11,8 @@ mod llvm;
 pub struct Llvm;
 
 impl Backend for Llvm {
-  fn build_and_write(ctxt: Ctxt, output: &str, print_llvm_ir: bool) {
+  fn build_and_write<W>(ctxt: Ctxt, output: &mut W, print_llvm_ir: bool)
+      where W: std::io::Write {
     let module = llvm::Module::new();
     let mut function_hm = HashMap::new();
     let opt_level = if ctxt.optimize {
@@ -40,7 +41,7 @@ impl Backend for Llvm {
 
     module.verify();
 
-    match target_machine.emit_to_file(&module, output) {
+    match target_machine.emit_to(&module, output) {
       Ok(()) => {},
       Err(e) => panic!("Failed to write to output file: {:?}", e),
     }

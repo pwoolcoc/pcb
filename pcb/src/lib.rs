@@ -14,8 +14,9 @@ impl Ctxt {
     Ctxt(core::pcb::Ctxt::new(false))
   }
 
-  pub fn build_and_write<B>(self, output_file: &str, print_extra_info: bool)
-      where B: core::backend::Backend {
+  pub fn build_and_write<B, W>(self, output_file: &mut W,
+      print_extra_info: bool)
+      where B: core::backend::Backend, W: std::io::Write {
     B::build_and_write(self.0, output_file, print_extra_info)
   }
 }

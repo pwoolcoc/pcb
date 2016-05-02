@@ -218,7 +218,8 @@ pub unsafe extern fn pcb_int_type(ctxt: *const pcb_Ctxt, size: u32)
 pub unsafe extern fn pcb_llvm_build_and_write(ctxt: pcb_Ctxt,
     name: *const libc::c_char, name_len: usize, print_llvm_ir: bool) {
   let name = ptr_len_to_str(name as *const u8, name_len);
-  Box::from_raw(ctxt).0.build_and_write::<pcb_llvm::Llvm>(name, print_llvm_ir)
+  Box::from_raw(ctxt).0.build_and_write::<pcb_llvm::Llvm, _>(
+    &mut std::fs::File::create(name).unwrap(), print_llvm_ir)
 }
 
 
