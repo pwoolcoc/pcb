@@ -2,7 +2,7 @@
 name = "pcb-core"
 version = "0.2.0"
 authors = ["ubsan <npmazzuca@gmail.com>"]
-description = "Pink Compiler Backend: Language agnostic compiler backend - Core Library"
+description = "Pink Compiler Backend: Language agnostic compiler backend - Core"
 license = "MIT/Apache-2.0"
 homepage = "https://github.com/ubsan/pcb"
 repository = "https://github.com/ubsan/pcb"
