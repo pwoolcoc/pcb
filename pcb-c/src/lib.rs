@@ -1,4 +1,4 @@
-#![allow(non_camel_case_types, non_snake_case)]
+#![allow(non_camel_case_types)]
 
 // TODO(ubsan): SWITCH TO ABORT ON PANIC
 // currently UBs if it panics
@@ -32,25 +32,25 @@ pub type pcb_ValueRef = *const pcb_ValueOpaque;
 pub struct pcb_TypeOpaque(());
 pub type pcb_TypeRef = *const pcb_TypeOpaque;
 
-// -- pcb_Ctxt --
+// == pcb_Ctxt ==
 
 #[no_mangle]
-pub unsafe extern fn pcb_Ctxt_new() -> pcb_Ctxt {
+pub unsafe extern fn pcb_ctxt() -> pcb_Ctxt {
   Box::into_raw(Box::new(pcb_CtxtOpaque(Ctxt::new())))
 }
 #[no_mangle]
-pub unsafe extern fn pcb_Ctxt_delete(ctxt: pcb_Ctxt) {
+pub unsafe extern fn pcb_delete_ctxt(ctxt: pcb_Ctxt) {
   Box::from_raw(ctxt);
 }
 #[no_mangle]
-pub unsafe extern fn pcb_Ctxt_print(ctxt: *const pcb_Ctxt) {
+pub unsafe extern fn pcb_print_ctxt(ctxt: *const pcb_Ctxt) {
   println!("{}", (**ctxt).0);
 }
 
-// -- pcb_FunctionType --
+// == pcb_FunctionType ==
 
 #[no_mangle]
-pub unsafe extern fn pcb_FunctionType_new(mut inputs: *const pcb_TypeRef,
+pub unsafe extern fn pcb_function_type(mut inputs: *const pcb_TypeRef,
     inputs_len: libc::size_t, output: pcb_TypeRef) -> pcb_FunctionType {
   let inputs = if inputs_len == 0 {
     vec![]
@@ -68,21 +68,21 @@ pub unsafe extern fn pcb_FunctionType_new(mut inputs: *const pcb_TypeRef,
 }
 
 #[no_mangle]
-pub unsafe extern fn pcb_FunctionType_clone(ty: *const pcb_FunctionType)
+pub unsafe extern fn pcb_clone_function_type(ty: *const pcb_FunctionType)
     -> pcb_FunctionType {
   let ref_ = &(**ty).0;
   Box::into_raw(Box::new(pcb_FunctionTypeOpaque(ref_.clone())))
 }
 
 #[no_mangle]
-pub unsafe extern fn pcb_FuntionType_delete(func: pcb_FunctionType) {
+pub unsafe extern fn pcb_delete_function_type(func: pcb_FunctionType) {
   Box::from_raw(func);
 }
 
-// -- pcb_FunctionRef --
+// == pcb_FunctionRef ==
 
 #[no_mangle]
-pub unsafe extern fn pcb_Function_create(ctxt: *const pcb_Ctxt,
+pub unsafe extern fn pcb_add_function(ctxt: *const pcb_Ctxt,
     name: *const libc::c_char, name_len: libc::size_t, ty: pcb_FunctionType)
     -> pcb_FunctionRef {
   let name = ptr_len_to_str(name as *const u8, name_len);
@@ -90,26 +90,27 @@ pub unsafe extern fn pcb_Function_create(ctxt: *const pcb_Ctxt,
 }
 
 #[no_mangle]
-pub unsafe extern fn pcb_Function_get_argument(func: pcb_FunctionRef,
+pub unsafe extern fn pcb_get_argument(func: pcb_FunctionRef,
     number: u32) -> pcb_ValueRef {
   wrap(unwrap(func).get_argument(number))
 }
 
-// -- pcb_BlockRef --
+// == pcb_BlockRef ==
 
 #[no_mangle]
-pub unsafe extern fn pcb_Block_append(func: pcb_FunctionRef) -> pcb_BlockRef {
+pub unsafe extern fn pcb_append_block(func: pcb_FunctionRef) -> pcb_BlockRef {
   wrap(Block::append(unwrap(func)))
 }
 
+// misc
 #[no_mangle]
-pub unsafe extern fn pcb_Block_build_const_int(blk: pcb_BlockRef,
+pub unsafe extern fn pcb_build_const_int(blk: pcb_BlockRef,
     ty: pcb_TypeRef, value: u64) -> pcb_ValueRef {
   wrap(unwrap(blk).build_const_int(unwrap(ty), value))
 }
 
 #[no_mangle]
-pub unsafe extern fn pcb_Block_build_call(blk: pcb_BlockRef,
+pub unsafe extern fn pcb_build_call(blk: pcb_BlockRef,
     func: pcb_FunctionRef, args: *const pcb_ValueRef, args_len: libc::size_t)
     -> pcb_ValueRef {
   let opaque = ptr_len_to_slice(args, args_len);
@@ -120,28 +121,93 @@ pub unsafe extern fn pcb_Block_build_call(blk: pcb_BlockRef,
   wrap(unwrap(blk).build_call(unwrap(func), &unwrapped))
 }
 
+// binops
 #[no_mangle]
-pub unsafe extern fn pcb_Block_build_add(blk: pcb_BlockRef, lhs: pcb_ValueRef,
+pub unsafe extern fn pcb_build_mul(blk: pcb_BlockRef, lhs: pcb_ValueRef,
     rhs: pcb_ValueRef) -> pcb_ValueRef {
-  wrap(unwrap(blk).build_add(unwrap(lhs), unwrap(rhs)))
+  wrap(unwrap(blk).build_mul(unwrap(lhs), unwrap(rhs)))
+}
+#[no_mangle]
+pub unsafe extern fn pcb_build_udiv(blk: pcb_BlockRef, lhs: pcb_ValueRef,
+    rhs: pcb_ValueRef) -> pcb_ValueRef {
+  wrap(unwrap(blk).build_udiv(unwrap(lhs), unwrap(rhs)))
+}
+#[no_mangle]
+pub unsafe extern fn pcb_build_sdiv(blk: pcb_BlockRef, lhs: pcb_ValueRef,
+    rhs: pcb_ValueRef) -> pcb_ValueRef {
+  wrap(unwrap(blk).build_sdiv(unwrap(lhs), unwrap(rhs)))
+}
+#[no_mangle]
+pub unsafe extern fn pcb_build_urem(blk: pcb_BlockRef, lhs: pcb_ValueRef,
+    rhs: pcb_ValueRef) -> pcb_ValueRef {
+  wrap(unwrap(blk).build_urem(unwrap(lhs), unwrap(rhs)))
+}
+#[no_mangle]
+pub unsafe extern fn pcb_build_srem(blk: pcb_BlockRef, lhs: pcb_ValueRef,
+    rhs: pcb_ValueRef) -> pcb_ValueRef {
+  wrap(unwrap(blk).build_srem(unwrap(lhs), unwrap(rhs)))
 }
 
 #[no_mangle]
-pub unsafe extern fn pcb_Block_build_branch(blk: pcb_BlockRef,
+pub unsafe extern fn pcb_build_add(blk: pcb_BlockRef, lhs: pcb_ValueRef,
+    rhs: pcb_ValueRef) -> pcb_ValueRef {
+  wrap(unwrap(blk).build_add(unwrap(lhs), unwrap(rhs)))
+}
+#[no_mangle]
+pub unsafe extern fn pcb_build_sub(blk: pcb_BlockRef, lhs: pcb_ValueRef,
+    rhs: pcb_ValueRef) -> pcb_ValueRef {
+  wrap(unwrap(blk).build_sub(unwrap(lhs), unwrap(rhs)))
+}
+
+#[no_mangle]
+pub unsafe extern fn pcb_build_shl(blk: pcb_BlockRef, lhs: pcb_ValueRef,
+    rhs: pcb_ValueRef) -> pcb_ValueRef {
+  wrap(unwrap(blk).build_shl(unwrap(lhs), unwrap(rhs)))
+}
+#[no_mangle]
+pub unsafe extern fn pcb_build_zshr(blk: pcb_BlockRef, lhs: pcb_ValueRef,
+    rhs: pcb_ValueRef) -> pcb_ValueRef {
+  wrap(unwrap(blk).build_zshr(unwrap(lhs), unwrap(rhs)))
+}
+#[no_mangle]
+pub unsafe extern fn pcb_build_sshr(blk: pcb_BlockRef, lhs: pcb_ValueRef,
+    rhs: pcb_ValueRef) -> pcb_ValueRef {
+  wrap(unwrap(blk).build_sshr(unwrap(lhs), unwrap(rhs)))
+}
+
+#[no_mangle]
+pub unsafe extern fn pcb_build_and(blk: pcb_BlockRef, lhs: pcb_ValueRef,
+    rhs: pcb_ValueRef) -> pcb_ValueRef {
+  wrap(unwrap(blk).build_and(unwrap(lhs), unwrap(rhs)))
+}
+#[no_mangle]
+pub unsafe extern fn pcb_build_xor(blk: pcb_BlockRef, lhs: pcb_ValueRef,
+    rhs: pcb_ValueRef) -> pcb_ValueRef {
+  wrap(unwrap(blk).build_xor(unwrap(lhs), unwrap(rhs)))
+}
+#[no_mangle]
+pub unsafe extern fn pcb_build_or(blk: pcb_BlockRef, lhs: pcb_ValueRef,
+    rhs: pcb_ValueRef) -> pcb_ValueRef {
+  wrap(unwrap(blk).build_or(unwrap(lhs), unwrap(rhs)))
+}
+
+// terminators
+#[no_mangle]
+pub unsafe extern fn pcb_build_branch(blk: pcb_BlockRef,
     to: pcb_BlockRef) {
   unwrap(blk).build_branch(unwrap(to));
 }
 
 #[no_mangle]
-pub unsafe extern fn pcb_Block_build_return(blk: pcb_BlockRef,
+pub unsafe extern fn pcb_build_return(blk: pcb_BlockRef,
     val: pcb_ValueRef) {
   unwrap(blk).build_return(unwrap(val))
 }
 
-// -- pcb_TypeRef --
+// == pcb_TypeRef ==
 
 #[no_mangle]
-pub unsafe extern fn pcb_Type_int(ctxt: *const pcb_Ctxt, size: u32)
+pub unsafe extern fn pcb_int_type(ctxt: *const pcb_Ctxt, size: u32)
     -> pcb_TypeRef {
   wrap(ty::Type::int(&(**ctxt).0, size))
 }
@@ -149,7 +215,7 @@ pub unsafe extern fn pcb_Type_int(ctxt: *const pcb_Ctxt, size: u32)
 // == pcb_llvm ==
 
 #[no_mangle]
-pub unsafe extern fn pcb_Llvm_build_and_write(ctxt: pcb_Ctxt,
+pub unsafe extern fn pcb_llvm_build_and_write(ctxt: pcb_Ctxt,
     name: *const libc::c_char, name_len: usize, print_llvm_ir: bool) {
   let name = ptr_len_to_str(name as *const u8, name_len);
   Box::from_raw(ctxt).0.build_and_write::<pcb_llvm::Llvm>(name, print_llvm_ir)

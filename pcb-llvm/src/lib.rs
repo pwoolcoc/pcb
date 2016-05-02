@@ -100,10 +100,68 @@ fn build_value<'a>(value: &Value<'a>, builder: &llvm::Builder,
       builder.build_call(*functions.get(function).expect("pcb_ice: Blorghle"),
         &llvm_params)
     }
+    ValueKind::Mul(lhs, rhs) => {
+      builder.build_mul(values[lhs.number as usize],
+        values[rhs.number as usize])
+    }
+    ValueKind::UDiv(lhs, rhs) => {
+      builder.build_udiv(values[lhs.number as usize],
+        values[rhs.number as usize])
+    }
+    ValueKind::SDiv(lhs, rhs) => {
+      builder.build_sdiv(values[lhs.number as usize],
+        values[rhs.number as usize])
+    }
+    ValueKind::URem(lhs, rhs) => {
+      builder.build_urem(values[lhs.number as usize],
+        values[rhs.number as usize])
+    }
+    ValueKind::SRem(lhs, rhs) => {
+      builder.build_srem(values[lhs.number as usize],
+        values[rhs.number as usize])
+    }
+
     ValueKind::Add(lhs, rhs) => {
       builder.build_add(values[lhs.number as usize],
         values[rhs.number as usize])
     }
+    ValueKind::Sub(lhs, rhs) => {
+      builder.build_sub(values[lhs.number as usize],
+        values[rhs.number as usize])
+    }
+
+    ValueKind::Shl(lhs, rhs) => {
+      builder.build_shl(values[lhs.number as usize],
+        values[rhs.number as usize])
+    }
+    ValueKind::ZShr(lhs, rhs) => {
+      builder.build_ashr(values[lhs.number as usize],
+        values[rhs.number as usize])
+    }
+    ValueKind::SShr(lhs, rhs) => {
+      builder.build_lshr(values[lhs.number as usize],
+        values[rhs.number as usize])
+    }
+
+    ValueKind::And(lhs, rhs) => {
+      builder.build_and(values[lhs.number as usize],
+        values[rhs.number as usize])
+    }
+    ValueKind::Xor(lhs, rhs) => {
+      builder.build_xor(values[lhs.number as usize],
+        values[rhs.number as usize])
+    }
+    ValueKind::Or(lhs, rhs) => {
+      builder.build_or(values[lhs.number as usize],
+        values[rhs.number as usize])
+    }
+
+    ValueKind::Eq(_, _) => unimplemented!(),
+    ValueKind::Neq(_, _) => unimplemented!(),
+    ValueKind::Lt(_, _) => unimplemented!(),
+    ValueKind::Gt(_, _) => unimplemented!(),
+    ValueKind::Lte(_, _) => unimplemented!(),
+    ValueKind::Gte(_, _) => unimplemented!(),
     ValueKind::Parameter(_) => panic!("pcb_ice: Parameter should never be \
       built"),
   };

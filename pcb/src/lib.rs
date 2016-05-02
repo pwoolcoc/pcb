@@ -45,6 +45,17 @@ macro_rules! chk_term {
   )
 }
 
+macro_rules! chk_op_types {
+  ($lhs:expr, $rhs:expr) => (
+    assert!($lhs.0.ty() == $rhs.0.ty(), "pcb_assert: lhs and rhs are not of \
+      the same type");
+    /*if let core::ty::Type::Integer(_) = *lhs.0.ty() {
+    } else {
+      panic!("pcb_assert: `add` must take values of integer type");
+    }*/
+  )
+}
+
 impl<'c> Block<'c> {
   pub fn append(func: Function<'c>) -> Self {
     Block(func.0.add_block())
@@ -73,16 +84,75 @@ impl<'c> Block<'c> {
       core::function::ValueKind::Call { function: func.0,
         parameters: inner_params.into_boxed_slice() }))
   }
+
+  // -- binops --
+  pub fn build_mul(self, lhs: Value<'c>, rhs: Value<'c>) -> Value<'c> {
+    chk_term!(self);
+    chk_op_types!(lhs, rhs);
+    Value(self.0.add_value(core::function::ValueKind::Mul(lhs.0, rhs.0)))
+  }
+  pub fn build_udiv(self, lhs: Value<'c>, rhs: Value<'c>) -> Value<'c> {
+    chk_term!(self);
+    chk_op_types!(lhs, rhs);
+    Value(self.0.add_value(core::function::ValueKind::UDiv(lhs.0, rhs.0)))
+  }
+  pub fn build_sdiv(self, lhs: Value<'c>, rhs: Value<'c>) -> Value<'c> {
+    chk_term!(self);
+    chk_op_types!(lhs, rhs);
+    Value(self.0.add_value(core::function::ValueKind::SDiv(lhs.0, rhs.0)))
+  }
+  pub fn build_urem(self, lhs: Value<'c>, rhs: Value<'c>) -> Value<'c> {
+    chk_term!(self);
+    chk_op_types!(lhs, rhs);
+    Value(self.0.add_value(core::function::ValueKind::URem(lhs.0, rhs.0)))
+  }
+  pub fn build_srem(self, lhs: Value<'c>, rhs: Value<'c>) -> Value<'c> {
+    chk_term!(self);
+    chk_op_types!(lhs, rhs);
+    Value(self.0.add_value(core::function::ValueKind::SRem(lhs.0, rhs.0)))
+  }
+
   pub fn build_add(self, lhs: Value<'c>, rhs: Value<'c>) -> Value<'c> {
     chk_term!(self);
-    assert!(lhs.0.ty() == rhs.0.ty(), "pcb_assert: lhs and rhs are not of the \
-      same type");
-    /*if let core::ty::Type::Integer(_) = *lhs.0.ty() {
-    } else {
-      panic!("pcb_assert: `add` must take values of integer type");
-    }*/
-    Value(self.0.add_value(
-      core::function::ValueKind::Add(lhs.0, rhs.0)))
+    chk_op_types!(lhs, rhs);
+    Value(self.0.add_value(core::function::ValueKind::Add(lhs.0, rhs.0)))
+  }
+  pub fn build_sub(self, lhs: Value<'c>, rhs: Value<'c>) -> Value<'c> {
+    chk_term!(self);
+    chk_op_types!(lhs, rhs);
+    Value(self.0.add_value(core::function::ValueKind::Sub(lhs.0, rhs.0)))
+  }
+
+  pub fn build_shl(self, lhs: Value<'c>, rhs: Value<'c>) -> Value<'c> {
+    chk_term!(self);
+    chk_op_types!(lhs, rhs);
+    Value(self.0.add_value(core::function::ValueKind::Shl(lhs.0, rhs.0)))
+  }
+  pub fn build_zshr(self, lhs: Value<'c>, rhs: Value<'c>) -> Value<'c> {
+    chk_term!(self);
+    chk_op_types!(lhs, rhs);
+    Value(self.0.add_value(core::function::ValueKind::ZShr(lhs.0, rhs.0)))
+  }
+  pub fn build_sshr(self, lhs: Value<'c>, rhs: Value<'c>) -> Value<'c> {
+    chk_term!(self);
+    chk_op_types!(lhs, rhs);
+    Value(self.0.add_value(core::function::ValueKind::SShr(lhs.0, rhs.0)))
+  }
+
+  pub fn build_and(self, lhs: Value<'c>, rhs: Value<'c>) -> Value<'c> {
+    chk_term!(self);
+    chk_op_types!(lhs, rhs);
+    Value(self.0.add_value(core::function::ValueKind::And(lhs.0, rhs.0)))
+  }
+  pub fn build_xor(self, lhs: Value<'c>, rhs: Value<'c>) -> Value<'c> {
+    chk_term!(self);
+    chk_op_types!(lhs, rhs);
+    Value(self.0.add_value(core::function::ValueKind::Xor(lhs.0, rhs.0)))
+  }
+  pub fn build_or(self, lhs: Value<'c>, rhs: Value<'c>) -> Value<'c> {
+    chk_term!(self);
+    chk_op_types!(lhs, rhs);
+    Value(self.0.add_value(core::function::ValueKind::Or(lhs.0, rhs.0)))
   }
 
   pub fn build_return(self, value: Value<'c>) {

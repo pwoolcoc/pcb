@@ -144,8 +144,30 @@ impl<'c> Value<'c> {
         function,
         ..
       } => function.ty.output,
-      ValueKind::Parameter(ty) => ty,
+      ValueKind::Mul(lhs, _) => lhs.ty(),
+      ValueKind::UDiv(lhs, _) => lhs.ty(),
+      ValueKind::SDiv(lhs, _) => lhs.ty(),
+      ValueKind::URem(lhs, _) => lhs.ty(),
+      ValueKind::SRem(lhs, _) => lhs.ty(),
+
       ValueKind::Add(lhs, _) => lhs.ty(),
+      ValueKind::Sub(lhs, _) => lhs.ty(),
+
+      ValueKind::Shl(lhs, _) => lhs.ty(),
+      ValueKind::ZShr(lhs, _) => lhs.ty(),
+      ValueKind::SShr(lhs, _) => lhs.ty(),
+
+      ValueKind::And(lhs, _) => lhs.ty(),
+      ValueKind::Xor(lhs, _) => lhs.ty(),
+      ValueKind::Or(lhs, _) => lhs.ty(),
+
+      ValueKind::Eq(_, _) => unimplemented!(),
+      ValueKind::Neq(_, _) => unimplemented!(),
+      ValueKind::Lt(_, _) => unimplemented!(),
+      ValueKind::Gt(_, _) => unimplemented!(),
+      ValueKind::Lte(_, _) => unimplemented!(),
+      ValueKind::Gte(_, _) => unimplemented!(),
+      ValueKind::Parameter(ty) => ty,
     }
   }
 
@@ -160,7 +182,33 @@ pub enum ValueKind<'c> {
     function: &'c Function<'c>,
     parameters: Box<[&'c Value<'c>]>
   },
+
+  // -- binops --
+  Mul(&'c Value<'c>, &'c Value<'c>),
+  UDiv(&'c Value<'c>, &'c Value<'c>),
+  SDiv(&'c Value<'c>, &'c Value<'c>),
+  URem(&'c Value<'c>, &'c Value<'c>),
+  SRem(&'c Value<'c>, &'c Value<'c>),
+
   Add(&'c Value<'c>, &'c Value<'c>),
+  Sub(&'c Value<'c>, &'c Value<'c>),
+
+  Shl(&'c Value<'c>, &'c Value<'c>),
+  ZShr(&'c Value<'c>, &'c Value<'c>), // zero-extend
+  SShr(&'c Value<'c>, &'c Value<'c>), // sign-extend
+
+  And(&'c Value<'c>, &'c Value<'c>),
+  Xor(&'c Value<'c>, &'c Value<'c>),
+  Or(&'c Value<'c>, &'c Value<'c>),
+
+  Eq(&'c Value<'c>, &'c Value<'c>),
+  Neq(&'c Value<'c>, &'c Value<'c>),
+  Lt(&'c Value<'c>, &'c Value<'c>),
+  Gt(&'c Value<'c>, &'c Value<'c>),
+  Lte(&'c Value<'c>, &'c Value<'c>),
+  Gte(&'c Value<'c>, &'c Value<'c>),
+
+  // parameter (this *may not* be built; it's simply a placeholder)
   Parameter(&'c ty::Type),
 }
 
@@ -186,10 +234,32 @@ impl<'c> Debug for Value<'c> {
         }
         try!(write!(f, ")"));
       }
+      ValueKind::Mul(lhs, rhs) => try!(write!(f, "mul {} {}", lhs, rhs)),
+      ValueKind::UDiv(lhs, rhs) => try!(write!(f, "udiv {} {}", lhs, rhs)),
+      ValueKind::SDiv(lhs, rhs) => try!(write!(f, "sdiv {} {}", lhs, rhs)),
+      ValueKind::URem(lhs, rhs) => try!(write!(f, "urem {} {}", lhs, rhs)),
+      ValueKind::SRem(lhs, rhs) => try!(write!(f, "srem {} {}", lhs, rhs)),
+
+      ValueKind::Add(lhs, rhs) => try!(write!(f, "add {} {}", lhs, rhs)),
+      ValueKind::Sub(lhs, rhs) => try!(write!(f, "sub {} {}", lhs, rhs)),
+
+      ValueKind::Shl(lhs, rhs) => try!(write!(f, "shl {} {}", lhs, rhs)),
+      ValueKind::ZShr(lhs, rhs) => try!(write!(f, "zshr {} {}", lhs, rhs)), // zero-extend
+      ValueKind::SShr(lhs, rhs) => try!(write!(f, "sshr {} {}", lhs, rhs)), // sign-extend
+
+      ValueKind::And(lhs, rhs) => try!(write!(f, "and {} {}", lhs, rhs)),
+      ValueKind::Xor(lhs, rhs) => try!(write!(f, "xor {} {}", lhs, rhs)),
+      ValueKind::Or(lhs, rhs) => try!(write!(f, "or {} {}", lhs, rhs)),
+
+      ValueKind::Eq(lhs, rhs) => try!(write!(f, "eq {} {}", lhs, rhs)),
+      ValueKind::Neq(lhs, rhs) => try!(write!(f, "neq {} {}", lhs, rhs)),
+      ValueKind::Lt(lhs, rhs) => try!(write!(f, "lt {} {}", lhs, rhs)),
+      ValueKind::Gt(lhs, rhs) => try!(write!(f, "gt {} {}", lhs, rhs)),
+      ValueKind::Lte(lhs, rhs) => try!(write!(f, "lte {} {}", lhs, rhs)),
+      ValueKind::Gte(lhs, rhs) => try!(write!(f, "gte {} {}", lhs, rhs)),
+
       ValueKind::Parameter(_) => panic!("pcb_ice: Parameters should not be \
         displayed"),
-      ValueKind::Add(lhs, rhs) =>
-        try!(write!(f, "add {} {}", lhs, rhs))
     }
     Ok(())
   }

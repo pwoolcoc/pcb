@@ -36,37 +36,61 @@ typedef struct pcb_TypeOpaque pcb_TypeOpaque;
 
 typedef pcb_TypeOpaque const* pcb_TypeRef;
 
-pcb_Ctxt pcb_Ctxt_new(void);
+pcb_Ctxt pcb_ctxt(void);
 
-void pcb_Ctxt_delete(pcb_Ctxt ctxt);
+void pcb_delete_ctxt(pcb_Ctxt ctxt);
 
-void pcb_Ctxt_print(pcb_Ctxt const* ctxt);
+void pcb_print_ctxt(pcb_Ctxt const* ctxt);
 
-pcb_FunctionType pcb_FunctionType_new(pcb_TypeRef const* inputs, size_t inputs_len, pcb_TypeRef output);
+pcb_FunctionType pcb_function_type(pcb_TypeRef const* inputs, size_t inputs_len, pcb_TypeRef output);
 
-pcb_FunctionType pcb_FunctionType_clone(pcb_FunctionType const* ty);
+pcb_FunctionType pcb_clone_function_type(pcb_FunctionType const* ty);
 
-void pcb_FuntionType_delete(pcb_FunctionType func);
+void pcb_delete_function_type(pcb_FunctionType func);
 
-pcb_FunctionRef pcb_Function_create(pcb_Ctxt const* ctxt, char const* name, size_t name_len, pcb_FunctionType ty);
+pcb_FunctionRef pcb_add_function(pcb_Ctxt const* ctxt, char const* name, size_t name_len, pcb_FunctionType ty);
 
-pcb_ValueRef pcb_Function_get_argument(pcb_FunctionRef func, uint32_t number);
+pcb_ValueRef pcb_get_argument(pcb_FunctionRef func, uint32_t number);
 
-pcb_BlockRef pcb_Block_append(pcb_FunctionRef func);
+pcb_BlockRef pcb_append_block(pcb_FunctionRef func);
 
-pcb_ValueRef pcb_Block_build_const_int(pcb_BlockRef blk, pcb_TypeRef ty, uint64_t value);
+pcb_ValueRef pcb_build_const_int(pcb_BlockRef blk, pcb_TypeRef ty, uint64_t value);
 
-pcb_ValueRef pcb_Block_build_call(pcb_BlockRef blk, pcb_FunctionRef func, pcb_ValueRef const* args, size_t args_len);
+pcb_ValueRef pcb_build_call(pcb_BlockRef blk, pcb_FunctionRef func, pcb_ValueRef const* args, size_t args_len);
 
-pcb_ValueRef pcb_Block_build_add(pcb_BlockRef blk, pcb_ValueRef lhs, pcb_ValueRef rhs);
+pcb_ValueRef pcb_build_mul(pcb_BlockRef blk, pcb_ValueRef lhs, pcb_ValueRef rhs);
 
-void pcb_Block_build_branch(pcb_BlockRef blk, pcb_BlockRef to);
+pcb_ValueRef pcb_build_udiv(pcb_BlockRef blk, pcb_ValueRef lhs, pcb_ValueRef rhs);
 
-void pcb_Block_build_return(pcb_BlockRef blk, pcb_ValueRef val);
+pcb_ValueRef pcb_build_sdiv(pcb_BlockRef blk, pcb_ValueRef lhs, pcb_ValueRef rhs);
 
-pcb_TypeRef pcb_Type_int(pcb_Ctxt const* ctxt, uint32_t size);
+pcb_ValueRef pcb_build_urem(pcb_BlockRef blk, pcb_ValueRef lhs, pcb_ValueRef rhs);
 
-void pcb_Llvm_build_and_write(pcb_Ctxt ctxt, char const* name, uintptr_t name_len, bool print_llvm_ir);
+pcb_ValueRef pcb_build_srem(pcb_BlockRef blk, pcb_ValueRef lhs, pcb_ValueRef rhs);
+
+pcb_ValueRef pcb_build_add(pcb_BlockRef blk, pcb_ValueRef lhs, pcb_ValueRef rhs);
+
+pcb_ValueRef pcb_build_sub(pcb_BlockRef blk, pcb_ValueRef lhs, pcb_ValueRef rhs);
+
+pcb_ValueRef pcb_build_shl(pcb_BlockRef blk, pcb_ValueRef lhs, pcb_ValueRef rhs);
+
+pcb_ValueRef pcb_build_zshr(pcb_BlockRef blk, pcb_ValueRef lhs, pcb_ValueRef rhs);
+
+pcb_ValueRef pcb_build_sshr(pcb_BlockRef blk, pcb_ValueRef lhs, pcb_ValueRef rhs);
+
+pcb_ValueRef pcb_build_and(pcb_BlockRef blk, pcb_ValueRef lhs, pcb_ValueRef rhs);
+
+pcb_ValueRef pcb_build_xor(pcb_BlockRef blk, pcb_ValueRef lhs, pcb_ValueRef rhs);
+
+pcb_ValueRef pcb_build_or(pcb_BlockRef blk, pcb_ValueRef lhs, pcb_ValueRef rhs);
+
+void pcb_build_branch(pcb_BlockRef blk, pcb_BlockRef to);
+
+void pcb_build_return(pcb_BlockRef blk, pcb_ValueRef val);
+
+pcb_TypeRef pcb_int_type(pcb_Ctxt const* ctxt, uint32_t size);
+
+void pcb_llvm_build_and_write(pcb_Ctxt ctxt, char const* name, uintptr_t name_len, bool print_llvm_ir);
 
 
 
