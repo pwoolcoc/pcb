@@ -1,18 +1,18 @@
 //use super::Ctxt;
 use common::Interner;
 
-pub type TypeContext = Interner<TypeKind>;
+pub type TypeContext = Interner<Type>;
 
-impl TypeKind {
+impl Type {
   pub fn int_size(&self) -> u32 {
     match *self {
-      TypeKind::Integer(size) => size,
+      Type::Integer(size) => size,
     }
   }
 }
 
 #[derive(Debug, PartialEq, Eq, Hash)]
-pub enum TypeKind {
+pub enum Type {
   Integer(u32),
   /*
   Void,
@@ -25,17 +25,17 @@ pub enum TypeKind {
 
 #[derive(Clone, Debug, Hash, PartialEq, Eq)]
 pub struct Function<'t> {
-  pub inputs: Box<[&'t TypeKind]>,
-  pub output: &'t TypeKind,
+  pub inputs: Box<[&'t Type]>,
+  pub output: &'t Type,
 }
 
 mod fmt {
   use std::fmt::{Display, Formatter, Error};
-  use super::{TypeKind, Function};
-  impl Display for TypeKind {
+  use super::{Type, Function};
+  impl Display for Type {
     fn fmt(&self, f: &mut Formatter) -> Result<(), Error> {
       match *self {
-        TypeKind::Integer(n) => write!(f, "i{}", n),
+        Type::Integer(n) => write!(f, "i{}", n),
         /*
         TypeVariant::Bool => write!(f, "bool"),
         TypeVariant::Pointer => write!(f, "ptr"),

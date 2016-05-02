@@ -1,6 +1,6 @@
 use common::Context;
 use ty;
-use std::fmt::{self, Display, Formatter};
+use std::fmt::{self, Debug, Display, Formatter};
 use std::hash::{Hash, Hasher};
 use std::cell::{Cell, RefCell};
 
@@ -34,7 +34,7 @@ impl<'c> Display for Function<'c> {
   fn fmt(&self, f: &mut Formatter) -> Result<(), fmt::Error> {
     try!(writeln!(f, "define {}{} {{", self.name, self.ty));
     for blk in &self.blocks {
-      try!(write!(f, "{}", blk));
+      try!(write!(f, "{:?}", blk));
     }
     write!(f, "}}")
   }
@@ -76,10 +76,10 @@ impl<'c> Display for Terminator<'c> {
   fn fmt(&self, f: &mut Formatter) -> Result<(), fmt::Error> {
     match *self {
       Terminator::Branch(b) => {
-        write!(f, "branch bb{}", b.number)
+        write!(f, "branch {}", b)
       },
       Terminator::Return(r) => {
-        write!(f, "return %{}", r.number)
+        write!(f, "return {}", r)
       }
       Terminator::None => { Ok(()) }
     }
@@ -109,14 +109,20 @@ impl<'c> Block<'c> {
   }
 }
 
-impl<'c> Display for Block<'c> {
+impl<'c> Debug for Block<'c> {
   fn fmt(&self, f: &mut Formatter) -> Result<(), fmt::Error> {
-    try!(writeln!(f, "bb{}:", self.number));
+    try!(writeln!(f, "{}:", self));
     for value in &*self.block_values.borrow() {
-      try!(writeln!(f, "  %{}: {} = {}", value.number, value.ty(), value));
+      try!(writeln!(f, "  {}: {} = {:?}", value, value.ty(), value));
     }
     try!(writeln!(f, "  {}", self.terminator.get()));
     Ok(())
+  }
+}
+
+impl<'c> Display for Block<'c> {
+  fn fmt(&self, f: &mut Formatter) -> Result<(), fmt::Error> {
+    write!(f, "bb{}", self.number)
   }
 }
 
@@ -128,7 +134,7 @@ pub struct Value<'c> {
   pub func: &'c Function<'c>,
 }
 impl<'c> Value<'c> {
-  pub fn ty(&self) -> &'c ty::TypeKind {
+  pub fn ty(&self) -> &'c ty::Type {
     match self.kind {
       ValueKind::ConstInt {
         ty,
@@ -139,6 +145,7 @@ impl<'c> Value<'c> {
         ..
       } => function.ty.output,
       ValueKind::Parameter(ty) => ty,
+      ValueKind::Add(lhs, _) => lhs.ty(),
     }
   }
 
@@ -146,17 +153,18 @@ impl<'c> Value<'c> {
 
 pub enum ValueKind<'c> {
   ConstInt {
-    ty: &'c ty::TypeKind,
+    ty: &'c ty::Type,
     value: u64,
   },
   Call {
     function: &'c Function<'c>,
     parameters: Box<[&'c Value<'c>]>
   },
-  Parameter(&'c ty::TypeKind),
+  Add(&'c Value<'c>, &'c Value<'c>),
+  Parameter(&'c ty::Type),
 }
 
-impl<'c> Display for Value<'c> {
+impl<'c> Debug for Value<'c> {
   fn fmt(&self, f: &mut Formatter) -> Result<(), fmt::Error> {
     match self.kind {
       ValueKind::ConstInt {
@@ -180,7 +188,15 @@ impl<'c> Display for Value<'c> {
       }
       ValueKind::Parameter(_) => panic!("pcb_ice: Parameters should not be \
         displayed"),
+      ValueKind::Add(lhs, rhs) =>
+        try!(write!(f, "add {} {}", lhs, rhs))
     }
     Ok(())
+  }
+}
+
+impl<'c> Display for Value<'c> {
+  fn fmt(&self, f: &mut Formatter) -> Result<(), fmt::Error> {
+    write!(f, "%{}", self.number)
   }
 }

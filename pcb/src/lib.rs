@@ -55,17 +55,34 @@ impl<'c> Block<'c> {
     Value(self.0.add_value(
         core::function::ValueKind::ConstInt { ty: ty.inner(), value: value }))
   }
-  pub fn build_call(self, func: Function<'c>, params: &[Value<'c>])
+  pub fn build_call(self, func: Function<'c>, args: &[Value<'c>])
       -> Value<'c> {
     chk_term!(self);
+    assert!(args.len() == func.0.ty.inputs.len(), "pcb_assert: attempt to call \
+      a function with the incorrect number of arguments");
+    for (arg, param_ty) in args.iter().zip(func.0.ty.inputs.iter()) {
+      assert!(arg.0.ty() == *param_ty, "pcb_assert: attempt to call a function \
+        with incorrect argument types");
+    }
     // TODO(ubsan): check calls against type of func
     let mut inner_params = vec![];
-    for param in params {
+    for param in args {
       inner_params.push(param.0)
     }
     Value(self.0.add_value(
       core::function::ValueKind::Call { function: func.0,
         parameters: inner_params.into_boxed_slice() }))
+  }
+  pub fn build_add(self, lhs: Value<'c>, rhs: Value<'c>) -> Value<'c> {
+    chk_term!(self);
+    assert!(lhs.0.ty() == rhs.0.ty(), "pcb_assert: lhs and rhs are not of the \
+      same type");
+    /*if let core::ty::Type::Integer(_) = *lhs.0.ty() {
+    } else {
+      panic!("pcb_assert: `add` must take values of integer type");
+    }*/
+    Value(self.0.add_value(
+      core::function::ValueKind::Add(lhs.0, rhs.0)))
   }
 
   pub fn build_return(self, value: Value<'c>) {
@@ -91,11 +108,11 @@ pub mod ty {
   use core::ty;
   use super::Ctxt;
   #[derive(Copy, Clone, PartialEq, Eq, Hash)]
-  pub struct Type<'c>(&'c ty::TypeKind);
+  pub struct Type<'c>(&'c ty::Type);
 
   impl<'c> Type<'c> {
     pub fn int(ctxt: &Ctxt, size: u32) -> Type {
-      Type(ctxt.0.get_type(ty::TypeKind::Integer(size)))
+      Type(ctxt.0.get_type(ty::Type::Integer(size)))
     }
   }
 
@@ -121,9 +138,9 @@ pub mod ty {
   }
 
   impl<'c> super::TyExt for Type<'c> {
-    type Output = &'c ty::TypeKind;
-    fn inner(self) -> &'c ty::TypeKind { self.0 }
-    fn inner_ref(&self) -> &&'c ty::TypeKind { &self.0 }
+    type Output = &'c ty::Type;
+    fn inner(self) -> &'c ty::Type { self.0 }
+    fn inner_ref(&self) -> &&'c ty::Type { &self.0 }
   }
   impl<'c> super::TyExt for Function<'c> {
     type Output = ty::Function<'c>;

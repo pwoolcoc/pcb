@@ -30,18 +30,18 @@ impl Ctxt {
       });
       transmute::<&'c Function<'static>, &'c Function<'c>>(ret)
     };
-    for arg_ty in &ret.ty.inputs[..] {
+    for param_ty in &ret.ty.inputs[..] {
       ret.values.push(Value {
         number: ret.values.len() as u32,
-        kind: ValueKind::Parameter(arg_ty),
+        kind: ValueKind::Parameter(param_ty),
         func: ret,
       });
     }
     ret
   }
 
-  pub fn get_type(&self, kind: ty::TypeKind) -> &ty::TypeKind {
-    self.type_ctxt.get(kind)
+  pub fn get_type(&self, ty: ty::Type) -> &ty::Type {
+    self.type_ctxt.get(ty)
   }
 }
 

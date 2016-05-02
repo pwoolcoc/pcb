@@ -121,6 +121,12 @@ pub unsafe extern fn pcb_Block_build_call(blk: pcb_BlockRef,
 }
 
 #[no_mangle]
+pub unsafe extern fn pcb_Block_build_add(blk: pcb_BlockRef, lhs: pcb_ValueRef,
+    rhs: pcb_ValueRef) -> pcb_ValueRef {
+  wrap(unwrap(blk).build_add(unwrap(lhs), unwrap(rhs)))
+}
+
+#[no_mangle]
 pub unsafe extern fn pcb_Block_build_branch(blk: pcb_BlockRef,
     to: pcb_BlockRef) {
   unwrap(blk).build_branch(unwrap(to));

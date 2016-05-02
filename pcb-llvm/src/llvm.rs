@@ -400,7 +400,7 @@ impl std::ops::Drop for FnOptimizer {
 }
 
 
-pub fn size_of_type(target_data: &TargetData, ty: &ty::TypeKind) -> u64 {
+pub fn size_of_type(target_data: &TargetData, ty: &ty::Type) -> u64 {
   unsafe {
     LLVMSizeOfTypeInBits(target_data.0, get_type(target_data, &ty).0)
   }
@@ -412,11 +412,11 @@ pub fn get_int_type(size: u32) -> Type {
   }
 }
 
-pub fn get_type(_target_data: &TargetData, ty: &ty::TypeKind) -> Type {
-  use core::ty::TypeKind;
+pub fn get_type(_target_data: &TargetData, ty: &ty::Type) -> Type {
+  use core::ty::Type;
   unsafe {
     Type(match *ty {
-      TypeKind::Integer(size) => LLVMIntType(size),
+      Type::Integer(size) => LLVMIntType(size),
       /*
       TypeVariant::Bool => LLVMInt1Type(),
       TypeVariant::Pointer => LLVMPointerType(LLVMVoidType(), 0),

@@ -11,7 +11,7 @@ fn main() -> s32 {
   fib(0)
 }
 fn fib(x: s32) -> s32 {
-  x
+  x + x
 }
  */
 
@@ -23,7 +23,10 @@ int main() {
       pcb_Type_int(&ctxt, 32));
   pcb_FunctionRef foo = pcb_Function_create(&ctxt, STRl("foo"), foo_ty);
   pcb_BlockRef foo_start = pcb_Block_append(foo);
-  pcb_ValueRef foo_ret = pcb_Function_get_argument(foo, 0);
+  pcb_ValueRef lhs = pcb_Function_get_argument(foo, 0);
+  pcb_ValueRef rhs =
+    pcb_Block_build_const_int(foo_start, pcb_Type_int(&ctxt, 32), 5);
+  pcb_ValueRef foo_ret = pcb_Block_build_add(foo_start, lhs, rhs);
   pcb_Block_build_return(foo_start, foo_ret);
 
   pcb_FunctionType main_ty = pcb_FunctionType_new(NULL, 0,

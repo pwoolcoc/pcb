@@ -100,6 +100,10 @@ fn build_value<'a>(value: &Value<'a>, builder: &llvm::Builder,
       builder.build_call(*functions.get(function).expect("pcb_ice: Blorghle"),
         &llvm_params)
     }
+    ValueKind::Add(lhs, rhs) => {
+      builder.build_add(values[lhs.number as usize],
+        values[rhs.number as usize])
+    }
     ValueKind::Parameter(_) => panic!("pcb_ice: Parameter should never be \
       built"),
   };

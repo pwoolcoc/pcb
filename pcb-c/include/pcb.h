@@ -58,6 +58,8 @@ pcb_ValueRef pcb_Block_build_const_int(pcb_BlockRef blk, pcb_TypeRef ty, uint64_
 
 pcb_ValueRef pcb_Block_build_call(pcb_BlockRef blk, pcb_FunctionRef func, pcb_ValueRef const* args, size_t args_len);
 
+pcb_ValueRef pcb_Block_build_add(pcb_BlockRef blk, pcb_ValueRef lhs, pcb_ValueRef rhs);
+
 void pcb_Block_build_branch(pcb_BlockRef blk, pcb_BlockRef to);
 
 void pcb_Block_build_return(pcb_BlockRef blk, pcb_ValueRef val);
