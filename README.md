@@ -15,3 +15,7 @@ pcb-c
 ---
 This is the library you should use if you're writing a compiler in any other
 language
+
+pcb-llvm
+---
+This is the backend to use if you want to actually compile anything.
