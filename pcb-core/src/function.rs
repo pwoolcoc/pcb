@@ -14,12 +14,13 @@ pub struct Function<'c> {
 }
 
 impl<'c> Function<'c> {
-  pub fn add_block(&'c self) -> &'c Block<'c> {
+  pub fn add_block(&'c self, phis: Vec<&'c ty::Type>) -> &'c Block<'c> {
     self.blocks.push(
       Block {
         number: self.blocks.len() as u32,
         terminator: Cell::new(Terminator::None),
         block_values: RefCell::new(vec![]),
+        parameters: phis.into_boxed_slice(),
         func: self,
       })
   }
@@ -93,6 +94,7 @@ pub struct Block<'c> {
   pub number: u32,
   pub terminator: Cell<Terminator<'c>>,
   pub block_values: RefCell<Vec<&'c Value<'c>>>,
+  pub parameters: Box<[&'c ty::Type]>,
   pub func: &'c Function<'c>,
 }
 
@@ -208,7 +210,7 @@ pub enum ValueKind<'c> {
   Lte(&'c Value<'c>, &'c Value<'c>),
   Gte(&'c Value<'c>, &'c Value<'c>),
 
-  // parameter (this *may not* be built; it's simply a placeholder)
+  // placeholders
   Parameter(&'c ty::Type),
 }
 

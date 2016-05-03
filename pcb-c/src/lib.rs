@@ -50,21 +50,11 @@ pub unsafe extern fn pcb_print_ctxt(ctxt: *const pcb_Ctxt) {
 // == pcb_FunctionType ==
 
 #[no_mangle]
-pub unsafe extern fn pcb_function_type(mut inputs: *const pcb_TypeRef,
+pub unsafe extern fn pcb_function_type(inputs: *const pcb_TypeRef,
     inputs_len: libc::size_t, output: pcb_TypeRef) -> pcb_FunctionType {
-  let inputs = if inputs_len == 0 {
-    vec![]
-  } else {
-    let mut v = vec![];
-    let end = inputs.offset(inputs_len as isize);
-    while inputs != end {
-      v.push(unwrap(*inputs));
-      inputs = inputs.offset(1);
-    }
-    v
-  };
+  let inputs = unwrap_slice(ptr_len_to_slice(inputs, inputs_len));
   Box::into_raw(Box::new(pcb_FunctionTypeOpaque(
-      ty::Function::new(inputs, unwrap(output)))))
+      ty::Function::new(inputs.to_owned(), unwrap(output)))))
 }
 
 #[no_mangle]
@@ -98,8 +88,10 @@ pub unsafe extern fn pcb_get_argument(func: pcb_FunctionRef,
 // == pcb_BlockRef ==
 
 #[no_mangle]
-pub unsafe extern fn pcb_append_block(func: pcb_FunctionRef) -> pcb_BlockRef {
-  wrap(Block::append(unwrap(func)))
+pub unsafe extern fn pcb_append_block(func: pcb_FunctionRef,
+    phis: *const pcb_TypeRef, phis_len: libc::size_t) -> pcb_BlockRef {
+  let phis = ptr_len_to_slice(phis, phis_len);
+  wrap(Block::append(unwrap(func), unwrap_slice(phis)))
 }
 
 // misc
@@ -114,11 +106,7 @@ pub unsafe extern fn pcb_build_call(blk: pcb_BlockRef,
     func: pcb_FunctionRef, args: *const pcb_ValueRef, args_len: libc::size_t)
     -> pcb_ValueRef {
   let opaque = ptr_len_to_slice(args, args_len);
-  let mut unwrapped = vec![];
-  for el in opaque {
-    unwrapped.push(unwrap(*el));
-  }
-  wrap(unwrap(blk).build_call(unwrap(func), &unwrapped))
+  wrap(unwrap(blk).build_call(unwrap(func), unwrap_slice(opaque)))
 }
 
 // binops
@@ -244,15 +232,25 @@ unsafe fn ptr_len_to_slice<T>(ptr: *const T, len: libc::size_t)
 fn wrap<T: Wrap>(w: T) -> *const T::Wrapped {
   Wrap::wrap(w)
 }
-unsafe fn unwrap<'c, T: Unwrap<'c>>(u: *const T) -> T::Unwrapped {
-  Unwrap::unwrap(u)
+#[allow(dead_code)]
+fn wrap_slice<T: Wrap>(w: &[T]) -> &[*const T::Wrapped] {
+  Wrap::wrap_slice(w)
+}
+unsafe fn unwrap<'c, T: Unwrap<'c>>(w: *const T) -> T::Unwrapped {
+  Unwrap::unwrap(w)
+}
+unsafe fn unwrap_slice<'a, 'c: 'a, T: Unwrap<'c>>(w: &'a [*const T])
+    -> &'a [T::Unwrapped] {
+  Unwrap::unwrap_slice(w)
 }
 
 trait Wrap: Sized {
   type Wrapped;
   fn wrap(u: Self) -> *const Self::Wrapped;
+  fn wrap_slice(u: &[Self]) -> &[*const Self::Wrapped];
 }
 trait Unwrap<'c>: Sized {
   type Unwrapped: Wrap<Wrapped = Self>;
   unsafe fn unwrap(w: *const Self) -> Self::Unwrapped;
+  unsafe fn unwrap_slice(w: &[*const Self]) -> &[Self::Unwrapped];
 }

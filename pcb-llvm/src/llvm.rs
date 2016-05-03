@@ -423,8 +423,8 @@ pub fn get_type(_target_data: &TargetData, ty: &ty::Type) -> Type {
   unsafe {
     Type(match *ty {
       Type::Integer(size) => LLVMIntType(size),
+      Type::Bool => LLVMInt1Type(),
       /*
-      TypeVariant::Bool => LLVMInt1Type(),
       TypeVariant::Pointer => LLVMPointerType(LLVMVoidType(), 0),
       TypeVariant::Aggregate(ref v) => {
         let mut llvm =

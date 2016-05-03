@@ -7,6 +7,8 @@ impl Type {
   pub fn int_size(&self) -> u32 {
     match *self {
       Type::Integer(size) => size,
+      ref ty => panic!("pcb_ice: tried to take int_size of a non_int type: {}",
+                       ty)
     }
   }
 }
@@ -14,9 +16,9 @@ impl Type {
 #[derive(Debug, PartialEq, Eq, Hash)]
 pub enum Type {
   Integer(u32),
+  Bool,
   /*
   Void,
-  Bool,
   Pointer,
   // FnPtr
   Aggregate(Vec<Type<'c>>),
@@ -36,10 +38,10 @@ mod fmt {
     fn fmt(&self, f: &mut Formatter) -> Result<(), Error> {
       match *self {
         Type::Integer(n) => write!(f, "i{}", n),
+        Type::Bool => write!(f, "bool"),
         /*
-        TypeVariant::Bool => write!(f, "bool"),
-        TypeVariant::Pointer => write!(f, "ptr"),
-        TypeVariant::Aggregate(ref v) => {
+        Type::Pointer => write!(f, "ptr"),
+        Type::Aggregate(ref v) => {
           try!(write!(f, "("));
           if v.is_empty() {
             write!(f, ")")

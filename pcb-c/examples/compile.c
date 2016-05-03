@@ -22,7 +22,7 @@ int main() {
   pcb_FunctionType foo_ty = pcb_function_type(SLICE(ty_inputs),
       pcb_int_type(&ctxt, 32));
   pcb_FunctionRef foo = pcb_add_function(&ctxt, STRl("foo"), foo_ty);
-  pcb_BlockRef foo_start = pcb_append_block(foo);
+  pcb_BlockRef foo_start = pcb_append_block(foo, NULL, 0);
   pcb_ValueRef lhs_inner = pcb_get_argument(foo, 0);
   pcb_ValueRef lhs = pcb_build_add(foo_start, lhs_inner, lhs_inner);
   pcb_ValueRef rhs =
@@ -33,7 +33,7 @@ int main() {
   pcb_FunctionType main_ty = pcb_function_type(NULL, 0,
       pcb_int_type(&ctxt, 32));
   pcb_FunctionRef main = pcb_add_function(&ctxt, STRl("main"), main_ty);
-  pcb_BlockRef main_start = pcb_append_block(main);
+  pcb_BlockRef main_start = pcb_append_block(main, NULL, 0);
 
   pcb_ValueRef inputs[] = {
     pcb_build_const_int(main_start, pcb_int_type(&ctxt, 32), 7)};

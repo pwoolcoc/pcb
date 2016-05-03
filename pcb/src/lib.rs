@@ -58,8 +58,12 @@ macro_rules! chk_op_types {
 }
 
 impl<'c> Block<'c> {
-  pub fn append(func: Function<'c>) -> Self {
-    Block(func.0.add_block())
+  pub fn append(func: Function<'c>, phis: &[ty::Type<'c>]) -> Self {
+    let mut inner_phis = vec![];
+    for phi in phis {
+      inner_phis.push(phi.inner())
+    }
+    Block(func.0.add_block(inner_phis))
   }
 
   pub fn build_const_int(self, ty: ty::Type<'c>, value: u64) -> Value<'c> {

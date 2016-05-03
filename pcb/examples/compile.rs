@@ -18,14 +18,14 @@ fn main() {
     let s32_ty = Type::int(&ctxt, 32);
     let fun_ty = ty::Function::new(vec![], s32_ty);
     let foo = Function::new(&ctxt, "foo", fun_ty.clone());
-    let foo_start = Block::append(foo);
+    let foo_start = Block::append(foo, &[]);
     let foo_ret = foo_start.build_const_int(s32_ty, 0);
     foo_start.build_return(foo_ret);
 
     let main = Function::new(&ctxt, "main", fun_ty);
-    let main_start = Block::append(main); // the first block added is the entry
-                                          // block
-    let main_end = Block::append(main);
+    let main_start = Block::append(main, &[]); // the first block added is the
+                                               // entry block
+    let main_end = Block::append(main, &[]);
     let main_ret = main_start.build_call(foo, &[]);
     main_start.build_branch(main_end);
     main_end.build_call(foo, &[]); // useless, but you can still do

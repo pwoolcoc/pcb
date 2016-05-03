@@ -52,7 +52,7 @@ pcb_FunctionRef pcb_add_function(pcb_Ctxt const* ctxt, char const* name, size_t 
 
 pcb_ValueRef pcb_get_argument(pcb_FunctionRef func, uint32_t number);
 
-pcb_BlockRef pcb_append_block(pcb_FunctionRef func);
+pcb_BlockRef pcb_append_block(pcb_FunctionRef func, pcb_TypeRef const* phis, size_t phis_len);
 
 pcb_ValueRef pcb_build_const_int(pcb_BlockRef blk, pcb_TypeRef ty, uint64_t value);
 
